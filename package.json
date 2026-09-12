@@ -1,0 +1,12 @@
+{
+  "name": "kas-kecil-bengkel",
+  "version": "1.0.0",
+  "description": "Sistem Database & Monitoring Kas Kecil Bengkel Shop & Drive dan Bima Motor",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["kasir", "kas-kecil", "bengkel", "database"],
+  "author": "Shop & Drive / Bima Motor",
+  "license": "MIT"
+}

@@ -1,28 +1,30 @@
 /**
  * MONITOR KAS KECIL BENGKEL (Shop & Drive & Bima Motor)
- * JavaScript logic, live reactive calculations, dynamic expense list, 
- * daily interactive calendar, denomination counter, localStorage persistence, Excel export, and print preview.
+ * Database Layer (IndexedDB + LocalStorage Sync + REST API backend fallback),
+ * Live Reactive Calculations, Daily Calendar, Denomination Counter, Excel Export, and Print Sheet.
  */
 
-// Storage Key
+// Database Constants
+const DB_NAME = 'KasBengkelShopDriveDB';
+const DB_VERSION = 1;
 const STORAGE_KEY = 'kas_bengkel_shop_drive_bima_v1';
+const API_BASE_URL = 'http://localhost:3000/api';
 
-// Initial state for dynamic operational expense items
+let dbInstance = null;
 let currentExpenses = [
   { id: 1, desc: 'Bensin Operasional / Antar Barang', amount: 50000 },
   { id: 2, desc: 'Makan Siang Mekanik & Staff', amount: 75000 }
 ];
 
-// Current calendar view month and year
 let currentCalDate = new Date();
 
-// Utility: Format Number to Indonesian Rupiah
+// Utility: Format Rupiah
 function formatRupiah(number) {
   const num = Number(number) || 0;
   return 'Rp ' + Math.floor(num).toLocaleString('id-ID');
 }
 
-// Utility: Parse raw integer number from formatted string
+// Utility: Parse Number
 function parseNumber(str) {
   if (typeof str === 'number') return str;
   if (!str) return 0;
@@ -30,7 +32,7 @@ function parseNumber(str) {
   return parseInt(clean, 10) || 0;
 }
 
-// Utility: Setup auto formatting on number input
+// Utility: Number input formatter
 function setupNumberInput(inputEl) {
   inputEl.addEventListener('focus', function () {
     const rawVal = parseNumber(this.value);
@@ -70,7 +72,81 @@ function initLiveClock() {
   }
 }
 
-// Render dynamic operational expenses list
+// -------------------------------------------------------------
+// INDEXEDDB DATABASE ENGINE
+// -------------------------------------------------------------
+function openDatabase() {
+  return new Promise((resolve, reject) => {
+    if (!window.indexedDB) {
+      console.warn('IndexedDB not supported, falling back to LocalStorage.');
+      resolve(null);
+      return;
+    }
+
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('kas_records')) {
+        const store = db.createObjectStore('kas_records', { keyPath: 'id' });
+        store.createIndex('tanggal', 'tanggal', { unique: false });
+        store.createIndex('createdAt', 'createdAt', { unique: false });
+      }
+    };
+
+    request.onsuccess = (e) => {
+      dbInstance = e.target.result;
+      console.log('IndexedDB KasBengkelShopDriveDB connected successfully.');
+      syncIndexedDBWithStorage();
+      resolve(dbInstance);
+    };
+
+    request.onerror = (e) => {
+      console.error('IndexedDB error:', e.target.error);
+      resolve(null);
+    };
+  });
+}
+
+function syncIndexedDBWithStorage() {
+  if (!dbInstance) return;
+  const records = getSavedRecordsFromLocalStorage();
+  const tx = dbInstance.transaction('kas_records', 'readwrite');
+  const store = tx.objectStore('kas_records');
+  records.forEach(rec => store.put(rec));
+}
+
+// LocalStorage Helper
+function getSavedRecordsFromLocalStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    console.error('Error reading localStorage:', e);
+    return [];
+  }
+}
+
+function getSavedRecords() {
+  return getSavedRecordsFromLocalStorage();
+}
+
+function saveRecordsToStorage(records) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    if (dbInstance) {
+      const tx = dbInstance.transaction('kas_records', 'readwrite');
+      const store = tx.objectStore('kas_records');
+      store.clear().onsuccess = () => {
+        records.forEach(rec => store.put(rec));
+      };
+    }
+  } catch (e) {
+    console.error('Error saving to storage:', e);
+  }
+}
+
+// Dynamic Expenses Renderer
 function renderExpenses() {
   const container = document.getElementById('expenseList');
   if (!container) return;
@@ -301,25 +377,6 @@ function setupDenominationCounter() {
   });
 }
 
-// LocalStorage Management
-function getSavedRecords() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch (e) {
-    console.error('Error reading localStorage:', e);
-    return [];
-  }
-}
-
-function saveRecordsToStorage(records) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-  } catch (e) {
-    console.error('Error writing to localStorage:', e);
-  }
-}
-
 // Seed default initial sample record if none exists
 function initSampleDataIfEmpty() {
   const records = getSavedRecords();
@@ -373,12 +430,9 @@ function renderCalendar() {
 
   monthYearEl.innerText = `${monthNamesIndo[month]} ${year}`;
 
-  // First day of month (0 = Sun, 1 = Mon, ...)
   const firstDay = new Date(year, month, 1).getDay();
-  // Total days in current month
   const totalDays = new Date(year, month + 1, 0).getDate();
 
-  // Create lookup for recorded dates: Map<YYYY-MM-DD, Record>
   const recordMap = new Map();
   records.forEach(rec => {
     if (rec.tanggal) {
@@ -388,7 +442,6 @@ function renderCalendar() {
 
   grid.innerHTML = '';
 
-  // Empty cells before the first day of month
   for (let i = 0; i < firstDay; i++) {
     const emptyCell = document.createElement('div');
     emptyCell.className = 'py-2 text-slate-300 pointer-events-none';
@@ -397,7 +450,6 @@ function renderCalendar() {
 
   const todayStr = new Date().toISOString().split('T')[0];
 
-  // Render each day of the month
   for (let day = 1; day <= totalDays; day++) {
     const mm = String(month + 1).padStart(2, '0');
     const dd = String(day).padStart(2, '0');
@@ -426,7 +478,6 @@ function renderCalendar() {
 
     cell.className = baseClass;
 
-    // Dot indicator if recorded
     let dotHtml = '';
     if (hasRecord) {
       const dotColor = isSelected ? 'bg-amber-300' : 'bg-emerald-500';
@@ -454,14 +505,12 @@ function selectDateFromCalendar(dateStr) {
     inputTanggal.value = dateStr;
   }
 
-  // Check if a record exists for this date
   const records = getSavedRecords();
   const existingRecord = records.find(r => r.tanggal === dateStr);
 
   if (existingRecord) {
     loadRecordToForm(existingRecord.id);
   } else {
-    // Reset form for fresh input on this date
     document.getElementById('inputKasir').value = '';
     document.getElementById('inputCatatan').value = '';
     document.getElementById('inputPenjualanShopDrive').value = '0';
@@ -504,7 +553,6 @@ function updateCalendarSelectedInfo(dateStr) {
   }
 }
 
-// Setup Calendar Navigation
 function setupCalendarControls() {
   document.getElementById('btnPrevMonth')?.addEventListener('click', () => {
     currentCalDate.setMonth(currentCalDate.getMonth() - 1);
@@ -530,6 +578,132 @@ function setupCalendarControls() {
       renderCalendar();
       updateCalendarSelectedInfo(val);
     }
+  });
+}
+
+// -------------------------------------------------------------
+// DATABASE BACKUP, RESTORE & MODAL MANAGEMENT
+// -------------------------------------------------------------
+function setupDatabaseModal() {
+  const modal = document.getElementById('dbModal');
+  const btnOpen = document.getElementById('btnOpenDbModal');
+  const btnClose1 = document.getElementById('btnCloseDbModal');
+  const btnClose2 = document.getElementById('btnCloseDbModal2');
+  const btnBackupJson = document.getElementById('btnBackupJson');
+  const btnBackupSql = document.getElementById('btnBackupSql');
+  const btnTriggerRestore = document.getElementById('btnTriggerRestore');
+  const fileInput = document.getElementById('dbFileInput');
+
+  function updateDbStats() {
+    const records = getSavedRecords();
+    const totalEl = document.getElementById('dbTotalRecords');
+    if (totalEl) totalEl.innerText = `${records.length} Transaksi`;
+  }
+
+  btnOpen?.addEventListener('click', () => {
+    updateDbStats();
+    modal?.classList.remove('hidden');
+  });
+
+  [btnClose1, btnClose2].forEach(btn => {
+    btn?.addEventListener('click', () => modal?.classList.add('hidden'));
+  });
+
+  // Backup JSON
+  btnBackupJson?.addEventListener('click', () => {
+    const records = getSavedRecords();
+    const dbExport = {
+      database: 'KasBengkelShopDriveDB',
+      version: '1.0',
+      exportedAt: new Date().toISOString(),
+      recordCount: records.length,
+      data: records
+    };
+
+    const blob = new Blob([JSON.stringify(dbExport, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Backup_Kas_Bengkel_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  });
+
+  // Backup SQL Dump
+  btnBackupSql?.addEventListener('click', () => {
+    const records = getSavedRecords();
+    let sql = `-- DATABASE DUMP: MONITOR KAS KECIL BENGKEL\n`;
+    sql += `-- Generated At: ${new Date().toISOString()}\n\n`;
+    sql += `CREATE TABLE IF NOT EXISTS tbl_rekap_kas (\n`;
+    sql += `  id VARCHAR(50) PRIMARY KEY,\n`;
+    sql += `  tanggal DATE,\n`;
+    sql += `  kasir VARCHAR(100),\n`;
+    sql += `  saldo_awal BIGINT,\n`;
+    sql += `  penjualan_shop_drive BIGINT,\n`;
+    sql += `  penjualan_bima_motor BIGINT,\n`;
+    sql += `  total_pemasukan BIGINT,\n`;
+    sql += `  transfer_mandiri BIGINT,\n`;
+    sql += `  card_edc BIGINT,\n`;
+    sql += `  penghematan_trade_in BIGINT,\n`;
+    sql += `  biaya_operasional BIGINT,\n`;
+    sql += `  total_pengeluaran_kas BIGINT,\n`;
+    sql += `  sisa_uang_kas_kecil BIGINT,\n`;
+    sql += `  fisik_riil BIGINT,\n`;
+    sql += `  selisih BIGINT,\n`;
+    sql += `  catatan TEXT,\n`;
+    sql += `  created_at TIMESTAMP\n`;
+    sql += `);\n\n`;
+
+    records.forEach(r => {
+      const catEscaped = (r.catatan || '').replace(/'/g, "''");
+      const kasirEscaped = (r.kasir || '').replace(/'/g, "''");
+      sql += `INSERT INTO tbl_rekap_kas VALUES ('${r.id}', '${r.tanggal}', '${kasirEscaped}', ${r.saldoAwal || 0}, ${r.penjualanShopDrive || 0}, ${r.penjualanBimaMotor || 0}, ${r.totalPemasukan || 0}, ${r.transferMandiri || 0}, ${r.cardEdc || 0}, ${r.penghematanTradeIn || 0}, ${r.biayaOperasional || 0}, ${r.totalPengeluaranKas || 0}, ${r.sisaUangKasKecil || 0}, ${r.fisikRiil || 0}, ${r.selisih || 0}, '${catEscaped}', '${r.createdAt || new Date().toISOString()}');\n`;
+    });
+
+    const blob = new Blob([sql], { type: 'text/sql' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Database_Kas_Bengkel_${new Date().toISOString().slice(0, 10)}.sql`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  });
+
+  // Restore JSON File
+  btnTriggerRestore?.addEventListener('click', () => fileInput?.click());
+
+  fileInput?.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target.result);
+        const recordsToRestore = Array.isArray(parsed) ? parsed : (parsed.data || []);
+
+        if (!Array.isArray(recordsToRestore) || recordsToRestore.length === 0) {
+          alert('Format file cadangan tidak valid atau kosong.');
+          return;
+        }
+
+        if (confirm(`Pulihkan ${recordsToRestore.length} data kas dari file cadangan?`)) {
+          saveRecordsToStorage(recordsToRestore);
+          renderHistoryTable();
+          renderCalendar();
+          updateDbStats();
+          modal?.classList.add('hidden');
+          alert('Database kas bengkel berhasil dipulihkan!');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Gagal membaca file database JSON: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+    fileInput.value = '';
   });
 }
 
@@ -613,7 +787,7 @@ function renderHistoryTable() {
   });
 }
 
-// Save Current Form to History
+// Save Current Form to Database
 function saveCurrentRecord() {
   const calc = recalculateAll();
   const tanggal = document.getElementById('inputTanggal').value;
@@ -648,7 +822,6 @@ function saveCurrentRecord() {
 
   const records = getSavedRecords();
   
-  // Update if record for same date already exists, or unshift
   const existingIdx = records.findIndex(r => r.tanggal === tanggal);
   if (existingIdx !== -1) {
     records[existingIdx] = record;
@@ -660,7 +833,7 @@ function saveCurrentRecord() {
   renderHistoryTable();
   renderCalendar();
 
-  alert(`Data Kas tanggal ${tanggal} (${kasir}) berhasil disimpan ke riwayat!`);
+  alert(`Data Kas tanggal ${tanggal} (${kasir}) berhasil tersimpan ke database sistem!`);
 }
 
 // Load a record back to form
@@ -687,7 +860,6 @@ function loadRecordToForm(id) {
   renderExpenses();
   recalculateAll();
 
-  // Sync calendar
   if (record.tanggal) {
     const parts = record.tanggal.split('-');
     currentCalDate = new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
@@ -697,9 +869,9 @@ function loadRecordToForm(id) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// Delete a single record
+// Delete record from Database
 function deleteRecord(id) {
-  if (!confirm('Apakah Anda yakin ingin menghapus data rekap kas ini?')) return;
+  if (!confirm('Apakah Anda yakin ingin menghapus data kas ini dari database?')) return;
   let records = getSavedRecords();
   records = records.filter(r => r.id !== id);
   saveRecordsToStorage(records);
@@ -707,15 +879,15 @@ function deleteRecord(id) {
   renderCalendar();
 }
 
-// Clear all history
+// Clear all Database records
 function clearAllHistory() {
-  if (!confirm('Peringatan: Seluruh riwayat pencatatan kas akan dihapus secara permanen. Lanjutkan?')) return;
+  if (!confirm('Peringatan: Seluruh riwayat database kas bengkel akan dihapus permanen. Lanjutkan?')) return;
   saveRecordsToStorage([]);
   renderHistoryTable();
   renderCalendar();
 }
 
-// Reset form to default
+// Reset form
 function resetForm() {
   if (!confirm('Kosongkan semua isian form kas?')) return;
   document.getElementById('inputKasir').value = '';
@@ -732,7 +904,7 @@ function resetForm() {
   recalculateAll();
 }
 
-// Print Cash Report / Berita Acara Kasir
+// Print Cash Report
 function printCashReport(data) {
   const calc = data || {
     ...recalculateAll(),
@@ -764,7 +936,6 @@ function printCashReport(data) {
   const selisihText = calc.selisih === 0 ? 'Rp 0 (PAS / SESUAI)' : (calc.selisih > 0 ? `+${formatRupiah(calc.selisih)} (LEBIH)` : `${formatRupiah(calc.selisih)} (KURANG)`);
   document.getElementById('printSelisih').innerText = selisihText;
 
-  // Print expense details
   const expContainer = document.getElementById('printExpenseDetails');
   if (expContainer) {
     if (calc.expenses && calc.expenses.length > 0) {
@@ -865,8 +1036,11 @@ function downloadBlankTemplate() {
 }
 
 // Document Ready Initialization
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   initLiveClock();
+
+  // Initialize Database Engine
+  await openDatabase();
 
   // Setup reactive number inputs
   [
@@ -892,9 +1066,10 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('inputFisikRiil').value = '3.125.000';
   document.getElementById('inputKasir').value = 'Ahmad (Shift 1)';
 
-  // Setup Calendar & Denomination Counter
+  // Setup Modules
   setupCalendarControls();
   setupDenominationCounter();
+  setupDatabaseModal();
 
   // Button actions
   document.getElementById('btnAddExpense')?.addEventListener('click', addExpenseItem);
