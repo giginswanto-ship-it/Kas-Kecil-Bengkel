@@ -1,14 +1,14 @@
 /**
  * MONITOR KAS KECIL BENGKEL (Shop & Drive & Bima Motor)
- * Database Layer (IndexedDB + LocalStorage Sync + REST API backend fallback),
- * Live Reactive Calculations, Daily Calendar, Denomination Counter, Excel Export, and Print Sheet.
+ * Database Layer (IndexedDB + LocalStorage Sync),
+ * Live Reactive Calculations, Daily Calendar, Denomination Counter,
+ * Direct PDF Download (html2pdf), Excel Export, and Print Sheet.
  */
 
 // Database Constants
 const DB_NAME = 'KasBengkelShopDriveDB';
 const DB_VERSION = 1;
 const STORAGE_KEY = 'kas_bengkel_shop_drive_bima_v1';
-const API_BASE_URL = 'http://localhost:3000/api';
 
 let dbInstance = null;
 let currentExpenses = [
@@ -76,7 +76,7 @@ function initLiveClock() {
 // INDEXEDDB DATABASE ENGINE
 // -------------------------------------------------------------
 function openDatabase() {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     if (!window.indexedDB) {
       console.warn('IndexedDB not supported, falling back to LocalStorage.');
       resolve(null);
@@ -707,6 +707,114 @@ function setupDatabaseModal() {
   });
 }
 
+// Populate Print/PDF Container
+function populatePrintContainer(data) {
+  const calc = data || {
+    ...recalculateAll(),
+    tanggal: document.getElementById('inputTanggal').value,
+    kasir: document.getElementById('inputKasir').value || 'Staff Kasir',
+    catatan: document.getElementById('inputCatatan').value,
+    expenses: currentExpenses
+  };
+
+  document.getElementById('printTanggalHeader').innerText = `Tanggal: ${calc.tanggal || new Date().toLocaleDateString('id-ID')}`;
+  document.getElementById('printKasir').innerText = calc.kasir || '-';
+  document.getElementById('printTime').innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+  document.getElementById('printSignKasir').innerText = `( ${calc.kasir || 'Kasir'} )`;
+
+  document.getElementById('printSaldoAwal').innerText = formatRupiah(calc.saldoAwal);
+  document.getElementById('printShopDrive').innerText = formatRupiah(calc.penjualanShopDrive);
+  document.getElementById('printBimaMotor').innerText = formatRupiah(calc.penjualanBimaMotor);
+  document.getElementById('printTotalPemasukan').innerText = formatRupiah(calc.totalPemasukan);
+
+  document.getElementById('printTransferMandiri').innerText = `(${formatRupiah(calc.transferMandiri)})`;
+  document.getElementById('printCardEdc').innerText = `(${formatRupiah(calc.cardEdc)})`;
+  document.getElementById('printPenghematanTradeIn').innerText = `(${formatRupiah(calc.penghematanTradeIn)})`;
+  document.getElementById('printTotalBiayaOps').innerText = `(${formatRupiah(calc.biayaOperasional)})`;
+  document.getElementById('printTotalPengeluaranKas').innerText = `(${formatRupiah(calc.totalPengeluaranKas)})`;
+
+  document.getElementById('printSisaKas').innerText = formatRupiah(calc.sisaUangKasKecil);
+  document.getElementById('printFisikRiil').innerText = formatRupiah(calc.fisikRiil);
+
+  const selisihText = calc.selisih === 0 ? 'Rp 0 (PAS / SESUAI)' : (calc.selisih > 0 ? `+${formatRupiah(calc.selisih)} (LEBIH)` : `${formatRupiah(calc.selisih)} (KURANG)`);
+  document.getElementById('printSelisih').innerText = selisihText;
+
+  const expContainer = document.getElementById('printExpenseDetails');
+  if (expContainer) {
+    if (calc.expenses && calc.expenses.length > 0) {
+      expContainer.innerHTML = calc.expenses.map((item, idx) => `
+        <div class="flex justify-between border-b border-slate-200 pb-0.5">
+          <span>${idx + 1}. ${item.desc || 'Biaya operasional'}</span>
+          <span class="font-bold">${formatRupiah(item.amount)}</span>
+        </div>
+      `).join('');
+    } else {
+      expContainer.innerHTML = '<div class="text-slate-500 italic">Tidak ada rincian pengeluaran operasional</div>';
+    }
+  }
+
+  return calc;
+}
+
+// -------------------------------------------------------------
+// DOWNLOAD TO PDF FUNCTION (html2pdf.js)
+// -------------------------------------------------------------
+function downloadReportAsPdf(data) {
+  const calc = populatePrintContainer(data);
+  const element = document.getElementById('pdfExportContainer');
+
+  // Temporarily display the print container so html2pdf can render it
+  const printArea = document.getElementById('printArea');
+  printArea.classList.remove('hidden');
+
+  const filename = `Laporan_Kas_Bengkel_${calc.tanggal || new Date().toISOString().slice(0, 10)}.pdf`;
+
+  const opt = {
+    margin: [10, 10, 10, 10],
+    filename: filename,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  // Generate PDF
+  if (window.html2pdf) {
+    window.html2pdf().set(opt).from(element).save().then(() => {
+      printArea.classList.add('hidden');
+    }).catch(err => {
+      console.error('PDF generation error:', err);
+      printArea.classList.add('hidden');
+      alert('Terjadi kesalahan saat membuat PDF: ' + err.message);
+    });
+  } else {
+    printArea.classList.add('hidden');
+    // Fallback to browser print as PDF
+    window.print();
+  }
+}
+
+// Print Cash Report
+function printCashReport(data) {
+  populatePrintContainer(data);
+  window.print();
+}
+
+function printSpecificRecord(id) {
+  const records = getSavedRecords();
+  const record = records.find(r => r.id === id);
+  if (record) {
+    printCashReport(record);
+  }
+}
+
+function downloadSpecificRecordPdf(id) {
+  const records = getSavedRecords();
+  const record = records.find(r => r.id === id);
+  if (record) {
+    downloadReportAsPdf(record);
+  }
+}
+
 // Render History Table
 function renderHistoryTable() {
   const records = getSavedRecords();
@@ -761,10 +869,13 @@ function renderHistoryTable() {
           <button class="btn-load-record p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition" data-id="${rec.id}" title="Muat ke Form">
             <i class="fa-solid fa-pen-to-square"></i>
           </button>
+          <button class="btn-pdf-record p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition" data-id="${rec.id}" title="Unduh PDF">
+            <i class="fa-solid fa-file-pdf"></i>
+          </button>
           <button class="btn-print-record p-1.5 text-slate-700 hover:bg-slate-100 rounded-lg transition" data-id="${rec.id}" title="Cetak Rekap">
             <i class="fa-solid fa-print"></i>
           </button>
-          <button class="btn-delete-record p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition" data-id="${rec.id}" title="Hapus Data">
+          <button class="btn-delete-record p-1.5 text-rose-400 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition" data-id="${rec.id}" title="Hapus Data">
             <i class="fa-solid fa-trash"></i>
           </button>
         </div>
@@ -776,6 +887,10 @@ function renderHistoryTable() {
   // Attach actions
   tbody.querySelectorAll('.btn-load-record').forEach(btn => {
     btn.addEventListener('click', () => loadRecordToForm(btn.dataset.id));
+  });
+
+  tbody.querySelectorAll('.btn-pdf-record').forEach(btn => {
+    btn.addEventListener('click', () => downloadSpecificRecordPdf(btn.dataset.id));
   });
 
   tbody.querySelectorAll('.btn-print-record').forEach(btn => {
@@ -904,63 +1019,6 @@ function resetForm() {
   recalculateAll();
 }
 
-// Print Cash Report
-function printCashReport(data) {
-  const calc = data || {
-    ...recalculateAll(),
-    tanggal: document.getElementById('inputTanggal').value,
-    kasir: document.getElementById('inputKasir').value || 'Staff Kasir',
-    catatan: document.getElementById('inputCatatan').value,
-    expenses: currentExpenses
-  };
-
-  document.getElementById('printTanggalHeader').innerText = `Tanggal: ${calc.tanggal || new Date().toLocaleDateString('id-ID')}`;
-  document.getElementById('printKasir').innerText = calc.kasir || '-';
-  document.getElementById('printTime').innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-  document.getElementById('printSignKasir').innerText = `( ${calc.kasir || 'Kasir'} )`;
-
-  document.getElementById('printSaldoAwal').innerText = formatRupiah(calc.saldoAwal);
-  document.getElementById('printShopDrive').innerText = formatRupiah(calc.penjualanShopDrive);
-  document.getElementById('printBimaMotor').innerText = formatRupiah(calc.penjualanBimaMotor);
-  document.getElementById('printTotalPemasukan').innerText = formatRupiah(calc.totalPemasukan);
-
-  document.getElementById('printTransferMandiri').innerText = `(${formatRupiah(calc.transferMandiri)})`;
-  document.getElementById('printCardEdc').innerText = `(${formatRupiah(calc.cardEdc)})`;
-  document.getElementById('printPenghematanTradeIn').innerText = `(${formatRupiah(calc.penghematanTradeIn)})`;
-  document.getElementById('printTotalBiayaOps').innerText = `(${formatRupiah(calc.biayaOperasional)})`;
-  document.getElementById('printTotalPengeluaranKas').innerText = `(${formatRupiah(calc.totalPengeluaranKas)})`;
-
-  document.getElementById('printSisaKas').innerText = formatRupiah(calc.sisaUangKasKecil);
-  document.getElementById('printFisikRiil').innerText = formatRupiah(calc.fisikRiil);
-
-  const selisihText = calc.selisih === 0 ? 'Rp 0 (PAS / SESUAI)' : (calc.selisih > 0 ? `+${formatRupiah(calc.selisih)} (LEBIH)` : `${formatRupiah(calc.selisih)} (KURANG)`);
-  document.getElementById('printSelisih').innerText = selisihText;
-
-  const expContainer = document.getElementById('printExpenseDetails');
-  if (expContainer) {
-    if (calc.expenses && calc.expenses.length > 0) {
-      expContainer.innerHTML = calc.expenses.map((item, idx) => `
-        <div class="flex justify-between border-b border-gray-200 pb-0.5">
-          <span>${idx + 1}. ${item.desc || 'Biaya operasional'}</span>
-          <span class="font-bold">${formatRupiah(item.amount)}</span>
-        </div>
-      `).join('');
-    } else {
-      expContainer.innerHTML = '<div class="text-gray-500 italic">Tidak ada rincian pengeluaran operasional</div>';
-    }
-  }
-
-  window.print();
-}
-
-function printSpecificRecord(id) {
-  const records = getSavedRecords();
-  const record = records.find(r => r.id === id);
-  if (record) {
-    printCashReport(record);
-  }
-}
-
 // Export All History to Excel CSV
 function exportToExcelCSV() {
   const records = getSavedRecords();
@@ -1074,6 +1132,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Button actions
   document.getElementById('btnAddExpense')?.addEventListener('click', addExpenseItem);
   document.getElementById('btnSaveRecord')?.addEventListener('click', saveCurrentRecord);
+  document.getElementById('btnDownloadPdf')?.addEventListener('click', () => downloadReportAsPdf(null));
   document.getElementById('btnPrintReceipt')?.addEventListener('click', () => printCashReport(null));
   document.getElementById('btnResetForm')?.addEventListener('click', resetForm);
   document.getElementById('btnClearHistory')?.addEventListener('click', clearAllHistory);
