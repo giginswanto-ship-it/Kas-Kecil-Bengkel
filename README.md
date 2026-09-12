@@ -15,6 +15,7 @@ Aplikasi Web modern & responsif untuk sistem pencatatan, kalkulasi otomatis, dan
 
 ## ✨ Fitur-Fitur Utama
 
+- **Kalender Harian Interaktif**: Memilih dan melihat status rekapitulasi kas harian per tanggal secara visual (titik hijau penanda tanggal yang telah memiliki data rekap).
 - **Pemisahan Sumber Pemasukan**: Mencatat omset terpisah antara Shop & Drive dan Bima Motor secara otomatis.
 - **Auto-Kalkulasi Realtime**: Perhitungan langsung berjalan seketika saat kasir mengetik nominal.
 - **Rincian Pengeluaran Operasional Dinamis**: Kasir dapat menambah/menghapus baris bon pengeluaran kas kecil (bensin, makan siang, sparepart darurat, dll).
