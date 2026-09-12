@@ -22,6 +22,7 @@ Aplikasi Web modern & responsif untuk sistem pencatatan, kalkulasi otomatis, dan
 - **Rincian Pengeluaran Operasional Dinamis**: Kasir dapat menambah/menghapus baris bon pengeluaran kas kecil (bensin, makan siang, sparepart darurat, dll).
 - **Kalkulator Pecahan Uang Fisik (Denomination Counter)**: Mempermudah kasir menghitung lembaran (Rp 100rb, 50rb, 20rb, 10rb, 5rb, 2rb, 1rb) dan uang koin saat tutup shift / serah terima kasir.
 - **Uji Petik & Validasi Selisih**: Otomatis mendeteksi status **Pas (Sesuai)**, **Lebih (Surplus)**, atau **Kurang (Defisit)**.
+- **Unduh Laporan PDF Langsung**: Tombol 1-klik untuk mengunduh dokumen Berita Acara Kas ke format file PDF resolusi tinggi (A4) secara instan.
 - **Ekspor Excel (CSV)**: Unduh rekap pembukuan kas yang rapi dan kompatibel dengan Microsoft Excel & Google Sheets.
 - **Cetak Berita Acara Kas Resmi**: Format cetak siap pakai dengan tabel rekap kas dan kolom tanda tangan Kasir & Kepala Bengkel.
 
