@@ -1,7 +1,7 @@
 /**
  * MONITOR KAS KECIL BENGKEL (Shop & Drive & Bima Motor)
  * JavaScript logic, live reactive calculations, dynamic expense list, 
- * denomination counter, localStorage persistence, Excel export, and print preview.
+ * daily interactive calendar, denomination counter, localStorage persistence, Excel export, and print preview.
  */
 
 // Storage Key
@@ -12,6 +12,9 @@ let currentExpenses = [
   { id: 1, desc: 'Bensin Operasional / Antar Barang', amount: 50000 },
   { id: 2, desc: 'Makan Siang Mekanik & Staff', amount: 75000 }
 ];
+
+// Current calendar view month and year
+let currentCalDate = new Date();
 
 // Utility: Format Number to Indonesian Rupiah
 function formatRupiah(number) {
@@ -321,9 +324,10 @@ function saveRecordsToStorage(records) {
 function initSampleDataIfEmpty() {
   const records = getSavedRecords();
   if (records.length === 0) {
+    const todayStr = new Date().toISOString().split('T')[0];
     const sampleRecord = {
       id: 'REC-' + Date.now(),
-      tanggal: new Date().toISOString().split('T')[0],
+      tanggal: todayStr,
       kasir: 'Ahmad (Shift 1)',
       catatan: 'Serah terima kasir lengkap, nota & struk EDC lengkap',
       saldoAwal: 500000,
@@ -346,6 +350,187 @@ function initSampleDataIfEmpty() {
     };
     saveRecordsToStorage([sampleRecord]);
   }
+}
+
+// -------------------------------------------------------------
+// KALENDER HARIAN KAS BENGKEL LOGIC
+// -------------------------------------------------------------
+const monthNamesIndo = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+];
+
+function renderCalendar() {
+  const grid = document.getElementById('calendarGrid');
+  const monthYearEl = document.getElementById('calendarMonthYear');
+  const selectedDateInput = document.getElementById('inputTanggal')?.value;
+  const records = getSavedRecords();
+
+  if (!grid || !monthYearEl) return;
+
+  const year = currentCalDate.getFullYear();
+  const month = currentCalDate.getMonth();
+
+  monthYearEl.innerText = `${monthNamesIndo[month]} ${year}`;
+
+  // First day of month (0 = Sun, 1 = Mon, ...)
+  const firstDay = new Date(year, month, 1).getDay();
+  // Total days in current month
+  const totalDays = new Date(year, month + 1, 0).getDate();
+
+  // Create lookup for recorded dates: Map<YYYY-MM-DD, Record>
+  const recordMap = new Map();
+  records.forEach(rec => {
+    if (rec.tanggal) {
+      recordMap.set(rec.tanggal, rec);
+    }
+  });
+
+  grid.innerHTML = '';
+
+  // Empty cells before the first day of month
+  for (let i = 0; i < firstDay; i++) {
+    const emptyCell = document.createElement('div');
+    emptyCell.className = 'py-2 text-slate-300 pointer-events-none';
+    grid.appendChild(emptyCell);
+  }
+
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  // Render each day of the month
+  for (let day = 1; day <= totalDays; day++) {
+    const mm = String(month + 1).padStart(2, '0');
+    const dd = String(day).padStart(2, '0');
+    const dateStr = `${year}-${mm}-${dd}`;
+
+    const isToday = dateStr === todayStr;
+    const isSelected = dateStr === selectedDateInput;
+    const hasRecord = recordMap.has(dateStr);
+    const recData = hasRecord ? recordMap.get(dateStr) : null;
+
+    const cell = document.createElement('button');
+    cell.type = 'button';
+    cell.dataset.date = dateStr;
+
+    let baseClass = 'py-2 px-1 rounded-xl transition flex flex-col items-center justify-center relative cursor-pointer font-medium ';
+    
+    if (isSelected) {
+      baseClass += 'bg-blue-600 text-white font-black shadow-md ';
+    } else if (isToday) {
+      baseClass += 'bg-blue-50 text-blue-900 border border-blue-300 font-bold hover:bg-blue-100 ';
+    } else if (hasRecord) {
+      baseClass += 'bg-emerald-50 text-emerald-900 border border-emerald-200 font-semibold hover:bg-emerald-100 ';
+    } else {
+      baseClass += 'text-slate-700 hover:bg-slate-100 ';
+    }
+
+    cell.className = baseClass;
+
+    // Dot indicator if recorded
+    let dotHtml = '';
+    if (hasRecord) {
+      const dotColor = isSelected ? 'bg-amber-300' : 'bg-emerald-500';
+      dotHtml = `<span class="w-1.5 h-1.5 rounded-full ${dotColor} mt-0.5" title="Ada catatan kas: ${formatRupiah(recData.totalPemasukan)}"></span>`;
+    }
+
+    cell.innerHTML = `
+      <span class="text-xs leading-none">${day}</span>
+      ${dotHtml}
+    `;
+
+    cell.addEventListener('click', () => {
+      selectDateFromCalendar(dateStr);
+    });
+
+    grid.appendChild(cell);
+  }
+
+  updateCalendarSelectedInfo(selectedDateInput);
+}
+
+function selectDateFromCalendar(dateStr) {
+  const inputTanggal = document.getElementById('inputTanggal');
+  if (inputTanggal) {
+    inputTanggal.value = dateStr;
+  }
+
+  // Check if a record exists for this date
+  const records = getSavedRecords();
+  const existingRecord = records.find(r => r.tanggal === dateStr);
+
+  if (existingRecord) {
+    loadRecordToForm(existingRecord.id);
+  } else {
+    // Reset form for fresh input on this date
+    document.getElementById('inputKasir').value = '';
+    document.getElementById('inputCatatan').value = '';
+    document.getElementById('inputPenjualanShopDrive').value = '0';
+    document.getElementById('inputPenjualanBimaMotor').value = '0';
+    document.getElementById('inputTransferMandiri').value = '0';
+    document.getElementById('inputCardEdc').value = '0';
+    document.getElementById('inputPenghematanTradeIn').value = '0';
+    document.getElementById('inputFisikRiil').value = '0';
+    currentExpenses = [];
+    renderExpenses();
+    recalculateAll();
+  }
+
+  renderCalendar();
+}
+
+function updateCalendarSelectedInfo(dateStr) {
+  const infoEl = document.getElementById('calendarSelectedInfo');
+  if (!infoEl) return;
+
+  if (!dateStr) {
+    infoEl.innerText = 'Pilih tanggal pada kalender';
+    return;
+  }
+
+  const records = getSavedRecords();
+  const rec = records.find(r => r.tanggal === dateStr);
+
+  const parts = dateStr.split('-');
+  const formattedDate = `${parts[2]} ${monthNamesIndo[Number(parts[1]) - 1]} ${parts[0]}`;
+
+  if (rec) {
+    infoEl.innerHTML = `
+      <span class="text-emerald-700"><i class="fa-solid fa-circle-check"></i> ${formattedDate}: Sisa Kas ${formatRupiah(rec.sisaUangKasKecil)}</span>
+    `;
+  } else {
+    infoEl.innerHTML = `
+      <span class="text-slate-500"><i class="fa-regular fa-calendar"></i> ${formattedDate} (Belum ada rekap)</span>
+    `;
+  }
+}
+
+// Setup Calendar Navigation
+function setupCalendarControls() {
+  document.getElementById('btnPrevMonth')?.addEventListener('click', () => {
+    currentCalDate.setMonth(currentCalDate.getMonth() - 1);
+    renderCalendar();
+  });
+
+  document.getElementById('btnNextMonth')?.addEventListener('click', () => {
+    currentCalDate.setMonth(currentCalDate.getMonth() + 1);
+    renderCalendar();
+  });
+
+  document.getElementById('btnCalendarToday')?.addEventListener('click', () => {
+    currentCalDate = new Date();
+    const todayStr = currentCalDate.toISOString().split('T')[0];
+    selectDateFromCalendar(todayStr);
+  });
+
+  document.getElementById('inputTanggal')?.addEventListener('change', (e) => {
+    const val = e.target.value;
+    if (val) {
+      const parts = val.split('-');
+      currentCalDate = new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
+      renderCalendar();
+      updateCalendarSelectedInfo(val);
+    }
+  });
 }
 
 // Render History Table
@@ -462,9 +647,18 @@ function saveCurrentRecord() {
   };
 
   const records = getSavedRecords();
-  records.unshift(record);
+  
+  // Update if record for same date already exists, or unshift
+  const existingIdx = records.findIndex(r => r.tanggal === tanggal);
+  if (existingIdx !== -1) {
+    records[existingIdx] = record;
+  } else {
+    records.unshift(record);
+  }
+
   saveRecordsToStorage(records);
   renderHistoryTable();
+  renderCalendar();
 
   alert(`Data Kas tanggal ${tanggal} (${kasir}) berhasil disimpan ke riwayat!`);
 }
@@ -493,6 +687,13 @@ function loadRecordToForm(id) {
   renderExpenses();
   recalculateAll();
 
+  // Sync calendar
+  if (record.tanggal) {
+    const parts = record.tanggal.split('-');
+    currentCalDate = new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
+    renderCalendar();
+  }
+
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -503,6 +704,7 @@ function deleteRecord(id) {
   records = records.filter(r => r.id !== id);
   saveRecordsToStorage(records);
   renderHistoryTable();
+  renderCalendar();
 }
 
 // Clear all history
@@ -510,6 +712,7 @@ function clearAllHistory() {
   if (!confirm('Peringatan: Seluruh riwayat pencatatan kas akan dihapus secara permanen. Lanjutkan?')) return;
   saveRecordsToStorage([]);
   renderHistoryTable();
+  renderCalendar();
 }
 
 // Reset form to default
@@ -689,7 +892,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('inputFisikRiil').value = '3.125.000';
   document.getElementById('inputKasir').value = 'Ahmad (Shift 1)';
 
-  // Setup Denomination Calculator
+  // Setup Calendar & Denomination Counter
+  setupCalendarControls();
   setupDenominationCounter();
 
   // Button actions
@@ -709,4 +913,5 @@ document.addEventListener('DOMContentLoaded', () => {
   renderExpenses();
   recalculateAll();
   renderHistoryTable();
+  renderCalendar();
 });
