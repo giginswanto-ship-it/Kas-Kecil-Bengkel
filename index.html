@@ -43,14 +43,18 @@
         </div>
       </div>
 
-      <div class="flex items-center gap-2 sm:gap-3 text-xs">
-        <div class="hidden md:flex items-center bg-white/10 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/15 text-slate-200">
+      <div class="flex items-center gap-2 sm:gap-2.5 text-xs">
+        <div class="hidden md:flex items-center bg-white/10 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/15 text-slate-200 shadow-inner">
           <i class="fa-regular fa-calendar-check mr-2 text-amber-400"></i>
           <span id="liveClock" class="font-medium">Memuat tanggal...</span>
         </div>
-        <button id="btnOpenDbModal" class="bg-indigo-700 hover:bg-indigo-600 text-white px-3 py-2 rounded-xl font-bold transition flex items-center gap-1.5 shadow-sm">
-          <i class="fa-solid fa-database text-amber-300"></i>
-          <span>Database</span>
+        <button id="btnOpenSettingsModal" class="bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-600 hover:to-indigo-600 text-white px-3.5 py-2 rounded-xl font-bold transition flex items-center gap-1.5 shadow-md shadow-indigo-950/30 border border-indigo-500/30">
+          <i class="fa-solid fa-gear text-amber-300"></i>
+          <span>Pengaturan & Rumus</span>
+        </button>
+        <button id="btnOpenDbModal" class="bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded-xl font-bold transition flex items-center gap-1.5 shadow-sm border border-slate-700">
+          <i class="fa-solid fa-database text-emerald-400"></i>
+          <span class="hidden sm:inline">Database</span>
         </button>
         <button id="btnDownloadTemplate" class="bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white px-3 py-2 rounded-xl font-medium border border-slate-700 transition flex items-center gap-1.5 shadow-sm">
           <i class="fa-solid fa-file-csv text-blue-400"></i>
@@ -67,92 +71,80 @@
   <!-- MAIN CONTAINER -->
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
 
-    <!-- FORMULA INFO BANNER -->
-    <div class="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 rounded-2xl p-4 sm:p-5 text-white shadow-lg border border-blue-800/50">
-      <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-        <div class="flex items-start gap-3.5">
-          <div class="p-3 bg-amber-400 text-blue-950 rounded-2xl text-xl shadow-md font-bold shrink-0">
-            <i class="fa-solid fa-calculator"></i>
-          </div>
-          <div class="space-y-1.5">
-            <h2 class="font-bold text-sm sm:text-base text-amber-300 flex items-center gap-2">
-              <i class="fa-solid fa-circle-info text-xs"></i> Rumus Baku Kas Kecil Bengkel:
-            </h2>
-            <div class="text-xs sm:text-sm text-slate-200 space-y-1 leading-relaxed">
-              <div>
-                <strong class="text-emerald-300">Pemasukan</strong> = Penjualan Shop & Drive + Penjualan Bima Motor
-              </div>
-              <div>
-                <strong class="text-rose-300">Pengeluaran Kas</strong> = Transfer Bank Mandiri + Card/EDC + Penghematan/Trade in + Pengeluaran Biaya Operasional
-              </div>
-              <div>
-                <strong class="text-amber-300">Sisa Uang di Kas Kecil</strong> = <span class="bg-white/15 px-2 py-0.5 rounded font-mono font-bold">[Saldo Awal + Total Pemasukan] - Total Pengeluaran Kas</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="flex flex-row lg:flex-col gap-2 shrink-0 self-stretch lg:self-auto justify-end">
-          <div class="bg-white/10 px-3 py-1.5 rounded-xl text-[11px] font-semibold text-rose-300 border border-rose-500/30 flex items-center justify-center gap-1.5">
-            <i class="fa-solid fa-file-pdf"></i> Unduh Laporan PDF
-          </div>
-          <div class="bg-white/10 px-3 py-1.5 rounded-xl text-[11px] font-semibold text-emerald-300 border border-emerald-500/30 flex items-center justify-center gap-1.5">
-            <i class="fa-solid fa-database"></i> Database Tersinkron
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- TOP SUMMARY STATS METRICS -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
       <!-- Card 1: Total Pemasukan -->
-      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm hover:shadow-md transition">
-        <div class="flex justify-between items-center text-slate-500 mb-1">
+      <div class="group relative overflow-hidden bg-white rounded-2xl p-4 border border-blue-100 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
+        <div class="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-bl-full pointer-events-none group-hover:scale-110 transition-transform"></div>
+        <div class="flex justify-between items-center text-slate-500 mb-1.5">
           <span class="text-xs font-bold uppercase tracking-wider text-blue-700">Total Pemasukan</span>
-          <span class="p-1.5 rounded-xl bg-blue-50 text-blue-600 text-sm"><i class="fa-solid fa-money-bill-wave"></i></span>
+          <span class="w-8 h-8 rounded-xl bg-blue-50 group-hover:bg-blue-600 text-blue-600 group-hover:text-white flex items-center justify-center text-sm transition-colors shadow-sm">
+            <i class="fa-solid fa-money-bill-wave"></i>
+          </span>
         </div>
-        <div class="text-xl font-black text-slate-800" id="cardTotalPemasukan">Rp 0</div>
-        <div class="text-[11px] text-slate-500 mt-1">Shop & Drive + Bima Motor</div>
+        <div class="text-2xl font-black text-slate-900 tracking-tight" id="cardTotalPemasukan">Rp 0</div>
+        <div class="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Shop & Drive + Bima Motor
+        </div>
       </div>
 
       <!-- Card 2: Penjualan Shop & Drive -->
-      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm hover:shadow-md transition">
-        <div class="flex justify-between items-center text-slate-500 mb-1">
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Shop & Drive</span>
-          <span class="p-1.5 rounded-xl bg-amber-50 text-amber-600 text-sm"><i class="fa-solid fa-car"></i></span>
+      <div class="group relative overflow-hidden bg-white rounded-2xl p-4 border border-amber-100 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
+        <div class="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-bl-full pointer-events-none group-hover:scale-110 transition-transform"></div>
+        <div class="flex justify-between items-center text-slate-500 mb-1.5">
+          <span class="text-xs font-bold uppercase tracking-wider text-amber-700">Shop & Drive</span>
+          <span class="w-8 h-8 rounded-xl bg-amber-50 group-hover:bg-amber-500 text-amber-600 group-hover:text-white flex items-center justify-center text-sm transition-colors shadow-sm">
+            <i class="fa-solid fa-car"></i>
+          </span>
         </div>
-        <div class="text-xl font-black text-amber-700" id="cardPenjualanShopDrive">Rp 0</div>
-        <div class="text-[11px] text-slate-500 mt-1">Penjualan unit & jasa S&D</div>
+        <div class="text-2xl font-black text-amber-700 tracking-tight" id="cardPenjualanShopDrive">Rp 0</div>
+        <div class="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Penjualan unit & servis
+        </div>
       </div>
 
       <!-- Card 3: Penjualan Bima Motor -->
-      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm hover:shadow-md transition">
-        <div class="flex justify-between items-center text-slate-500 mb-1">
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Bima Motor</span>
-          <span class="p-1.5 rounded-xl bg-indigo-50 text-indigo-600 text-sm"><i class="fa-solid fa-motorcycle"></i></span>
+      <div class="group relative overflow-hidden bg-white rounded-2xl p-4 border border-indigo-100 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
+        <div class="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-bl-full pointer-events-none group-hover:scale-110 transition-transform"></div>
+        <div class="flex justify-between items-center text-slate-500 mb-1.5">
+          <span class="text-xs font-bold uppercase tracking-wider text-indigo-700">Bima Motor</span>
+          <span class="w-8 h-8 rounded-xl bg-indigo-50 group-hover:bg-indigo-600 text-indigo-600 group-hover:text-white flex items-center justify-center text-sm transition-colors shadow-sm">
+            <i class="fa-solid fa-motorcycle"></i>
+          </span>
         </div>
-        <div class="text-xl font-black text-indigo-700" id="cardPenjualanBimaMotor">Rp 0</div>
-        <div class="text-[11px] text-slate-500 mt-1">Penjualan unit & part BM</div>
+        <div class="text-2xl font-black text-indigo-700 tracking-tight" id="cardPenjualanBimaMotor">Rp 0</div>
+        <div class="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span> Penjualan unit & part BM
+        </div>
       </div>
 
       <!-- Card 4: Total Pengeluaran Kas -->
-      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm hover:shadow-md transition">
-        <div class="flex justify-between items-center text-slate-500 mb-1">
+      <div class="group relative overflow-hidden bg-white rounded-2xl p-4 border border-rose-100 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
+        <div class="absolute top-0 right-0 w-24 h-24 bg-rose-500/5 rounded-bl-full pointer-events-none group-hover:scale-110 transition-transform"></div>
+        <div class="flex justify-between items-center text-slate-500 mb-1.5">
           <span class="text-xs font-bold uppercase tracking-wider text-rose-700">Total Pengeluaran</span>
-          <span class="p-1.5 rounded-xl bg-rose-50 text-rose-600 text-sm"><i class="fa-solid fa-arrow-trend-down"></i></span>
+          <span class="w-8 h-8 rounded-xl bg-rose-50 group-hover:bg-rose-600 text-rose-600 group-hover:text-white flex items-center justify-center text-sm transition-colors shadow-sm">
+            <i class="fa-solid fa-arrow-trend-down"></i>
+          </span>
         </div>
-        <div class="text-xl font-black text-rose-600" id="cardTotalPengeluaran">Rp 0</div>
-        <div class="text-[11px] text-slate-500 mt-1">Bank, EDC, Trade In, Biaya Ops</div>
+        <div class="text-2xl font-black text-rose-600 tracking-tight" id="cardTotalPengeluaran">Rp 0</div>
+        <div class="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Bank, EDC, Trade In, Ops
+        </div>
       </div>
 
       <!-- Card 5: Sisa Kas Kecil (Highlight) -->
-      <div class="bg-gradient-to-br from-emerald-600 to-teal-800 text-white rounded-2xl p-4 shadow-md sm:col-span-2 lg:col-span-1">
-        <div class="flex justify-between items-center text-emerald-100 mb-1">
+      <div class="group relative overflow-hidden bg-gradient-to-br from-emerald-600 via-teal-700 to-emerald-900 text-white rounded-2xl p-4 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 sm:col-span-2 lg:col-span-1 border border-emerald-500/30">
+        <div class="flex justify-between items-center text-emerald-100 mb-1.5">
           <span class="text-xs font-extrabold uppercase tracking-wider text-amber-300">Sisa Kas Fisik</span>
-          <span class="p-1.5 rounded-xl bg-white/20 text-white text-sm"><i class="fa-solid fa-vault"></i></span>
+          <span class="w-8 h-8 rounded-xl bg-white/20 text-white flex items-center justify-center text-sm shadow-inner">
+            <i class="fa-solid fa-vault"></i>
+          </span>
         </div>
-        <div class="text-2xl font-black tracking-tight" id="cardSisaKasKecil">Rp 0</div>
-        <div class="text-[11px] text-emerald-100 mt-1">Harus ada di laci kasir</div>
+        <div class="text-2xl font-black tracking-tight drop-shadow-sm" id="cardSisaKasKecil">Rp 0</div>
+        <div class="text-[11px] text-emerald-100 mt-1 flex items-center gap-1 font-medium">
+          <i class="fa-solid fa-circle-check text-amber-300 text-[10px]"></i> Sisa di laci kasir
+        </div>
       </div>
     </div>
 
@@ -623,6 +615,9 @@
           <tbody id="historyTableBody" class="divide-y divide-slate-100 font-medium">
             <!-- Dynamic rows will be injected here -->
           </tbody>
+          <tfoot id="historyTableFoot" class="border-t-2 border-slate-300 font-bold bg-slate-100/90 text-slate-900">
+            <!-- Dynamic total summary row will be injected here -->
+          </tfoot>
         </table>
       </div>
 
@@ -636,68 +631,213 @@
 
   </main>
 
-  <!-- DATABASE MANAGER MODAL -->
-  <div id="dbModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200">
-      <div class="bg-gradient-to-r from-blue-950 to-indigo-900 p-4 text-white flex justify-between items-center">
-        <div class="flex items-center gap-2.5">
-          <span class="p-2 bg-amber-400 text-blue-950 rounded-xl text-sm font-bold shadow"><i class="fa-solid fa-database"></i></span>
+  <!-- SETTINGS, FORMULA & DATABASE MANAGER MODAL -->
+  <div id="dbModal" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-200/80 flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 p-4 sm:p-5 text-white flex justify-between items-center border-b border-white/10">
+        <div class="flex items-center gap-3">
+          <span class="w-10 h-10 rounded-2xl bg-amber-400 text-blue-950 flex items-center justify-center text-lg font-black shadow-md shadow-amber-400/20">
+            <i class="fa-solid fa-sliders"></i>
+          </span>
           <div>
-            <h3 class="font-extrabold text-base">Pusat Manajemen Database</h3>
-            <p class="text-[11px] text-blue-200">Cadangkan, pulihkan, atau kelola database kas bengkel</p>
+            <h3 class="font-extrabold text-base sm:text-lg tracking-tight">Pengaturan & Rumus Kas Bengkel</h3>
+            <p class="text-xs text-blue-200">Shop & Drive & Bima Motor • Konfigurasi & Panduan Baku</p>
           </div>
         </div>
-        <button type="button" id="btnCloseDbModal" class="text-slate-300 hover:text-white p-1.5 rounded-lg transition">
+        <button type="button" id="btnCloseDbModal" class="text-slate-400 hover:text-white hover:bg-white/10 p-2 rounded-xl transition">
           <i class="fa-solid fa-xmark text-lg"></i>
         </button>
       </div>
 
-      <div class="p-5 space-y-4 text-xs">
-        <!-- Database Stats -->
-        <div class="grid grid-cols-2 gap-3">
-          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
-            <span class="text-[11px] text-slate-500 font-semibold block">Total Transaksi Kas</span>
-            <span class="text-lg font-black text-slate-800" id="dbTotalRecords">0 Record</span>
-          </div>
-          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
-            <span class="text-[11px] text-slate-500 font-semibold block">Engine Penyimpanan</span>
-            <span class="text-sm font-bold text-emerald-700 flex items-center gap-1 mt-0.5" id="dbEngineName">
-              <i class="fa-solid fa-circle-check"></i> IndexedDB & SQLite
-            </span>
-          </div>
-        </div>
-
-        <!-- Backup & Export Actions -->
-        <div class="space-y-2 border-t border-slate-100 pt-3">
-          <h4 class="font-bold text-slate-800 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-            <i class="fa-solid fa-download text-indigo-600"></i> Cadangkan Database (Backup)
-          </h4>
-          <p class="text-[11px] text-slate-500">Unduh seluruh rekapan kas & rincian biaya ke file JSON / SQL sebagai cadangan aman.</p>
-          <div class="grid grid-cols-2 gap-2 pt-1">
-            <button type="button" id="btnBackupJson" class="w-full py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 font-bold rounded-xl border border-indigo-200 transition flex items-center justify-center gap-1.5">
-              <i class="fa-solid fa-file-code text-indigo-600"></i> Cadangkan (.json)
-            </button>
-            <button type="button" id="btnBackupSql" class="w-full py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-800 font-bold rounded-xl border border-blue-200 transition flex items-center justify-center gap-1.5">
-              <i class="fa-solid fa-database text-blue-600"></i> Cadangkan (.sql)
-            </button>
-          </div>
-        </div>
-
-        <!-- Restore / Import Actions -->
-        <div class="space-y-2 border-t border-slate-100 pt-3">
-          <h4 class="font-bold text-slate-800 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-            <i class="fa-solid fa-upload text-emerald-600"></i> Pulihkan Database (Restore)
-          </h4>
-          <p class="text-[11px] text-slate-500">Impor file cadangan (.json) untuk memulihkan data kas yang tersimpan sebelumnya.</p>
-          <input type="file" id="dbFileInput" accept=".json" class="hidden">
-          <button type="button" id="btnTriggerRestore" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-sm transition flex items-center justify-center gap-1.5">
-            <i class="fa-solid fa-file-import"></i> Pilih File Cadangan (.json) untuk Dipulihkan
-          </button>
-        </div>
+      <!-- Navigation Tabs -->
+      <div class="flex border-b border-slate-200 bg-slate-50/90 px-4 pt-2 gap-2 text-xs font-bold overflow-x-auto">
+        <button type="button" id="modalTabBtnRumus" class="modal-tab-btn py-2.5 px-3.5 border-b-2 border-blue-600 text-blue-900 font-extrabold flex items-center gap-2 transition whitespace-nowrap">
+          <i class="fa-solid fa-calculator text-amber-500"></i> Rumus Baku Keuangan
+        </button>
+        <button type="button" id="modalTabBtnPengaturan" class="modal-tab-btn py-2.5 px-3.5 border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition whitespace-nowrap">
+          <i class="fa-solid fa-gear text-indigo-500"></i> Pengaturan Operasional
+        </button>
+        <button type="button" id="modalTabBtnDatabase" class="modal-tab-btn py-2.5 px-3.5 border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition whitespace-nowrap">
+          <i class="fa-solid fa-database text-emerald-500"></i> Database & Cadangan
+        </button>
       </div>
 
+      <!-- Modal Body (Scrollable) -->
+      <div class="p-5 sm:p-6 overflow-y-auto space-y-4 text-xs">
+
+        <!-- TAB 1: RUMUS BAKU KEUANGAN -->
+        <div id="tabContentRumus" class="space-y-4">
+          <div class="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 rounded-2xl p-4 text-white shadow-md border border-blue-800/40">
+            <div class="flex items-center gap-2 text-amber-300 font-extrabold text-sm mb-2">
+              <i class="fa-solid fa-scale-balanced"></i> Logika Utama Keuangan Kasir
+            </div>
+            <p class="text-slate-200 leading-relaxed text-xs">
+              Sistem menghitung secara otomatis seluruh pergerakan kas kecil harian menggunakan 4 pilar rumus baku di bawah ini:
+            </p>
+          </div>
+
+          <!-- Rumus Cards Grid -->
+          <div class="space-y-3">
+            <!-- 1. Pemasukan -->
+            <div class="bg-blue-50/80 border border-blue-200 rounded-2xl p-3.5 space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="font-extrabold text-blue-900 flex items-center gap-2">
+                  <span class="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px]">1</span>
+                  Total Pemasukan Bengkel
+                </span>
+                <span class="text-[10px] bg-blue-200/80 text-blue-900 font-bold px-2 py-0.5 rounded-full">Income</span>
+              </div>
+              <div class="font-mono font-bold text-blue-950 bg-white p-2.5 rounded-xl border border-blue-200/80 text-xs">
+                Total Pemasukan = Penjualan Shop & Drive + Penjualan Bima Motor
+              </div>
+              <p class="text-[11px] text-slate-600">Gabungan seluruh omset penjualan barang & jasa mekanik kedua unit usaha.</p>
+            </div>
+
+            <!-- 2. Pengeluaran Kas -->
+            <div class="bg-rose-50/80 border border-rose-200 rounded-2xl p-3.5 space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="font-extrabold text-rose-900 flex items-center gap-2">
+                  <span class="w-5 h-5 rounded-full bg-rose-600 text-white flex items-center justify-center text-[10px]">2</span>
+                  Total Pengeluaran Kas / Potongan Non-Tunai
+                </span>
+                <span class="text-[10px] bg-rose-200/80 text-rose-900 font-bold px-2 py-0.5 rounded-full">Deduction</span>
+              </div>
+              <div class="font-mono font-bold text-rose-950 bg-white p-2.5 rounded-xl border border-rose-200/80 text-xs">
+                Total Pengeluaran = Transfer Mandiri + Mesin EDC + Trade In + Biaya Operasional
+              </div>
+              <p class="text-[11px] text-slate-600">Mencakup pembayaran digital (tidak ada uang di laci), diskon tukar tambah, dan bon kas kecil operasional.</p>
+            </div>
+
+            <!-- 3. Sisa Kas Kecil -->
+            <div class="bg-emerald-50/80 border border-emerald-300 rounded-2xl p-3.5 space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="font-extrabold text-emerald-950 flex items-center gap-2">
+                  <span class="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px]">3</span>
+                  Sisa Uang di Kas Kecil (Target Fisik Laci)
+                </span>
+                <span class="text-[10px] bg-emerald-200 text-emerald-900 font-bold px-2 py-0.5 rounded-full">Balance</span>
+              </div>
+              <div class="font-mono font-bold text-emerald-950 bg-white p-2.5 rounded-xl border border-emerald-300 text-xs">
+                Sisa Uang Kas Kecil = [Saldo Awal Modal + Total Pemasukan] - Total Pengeluaran Kas
+              </div>
+              <p class="text-[11px] text-slate-600">Jumlah nominal uang kertas & koin yang wajib ada secara fisik di laci kasir pada akhir shift.</p>
+            </div>
+
+            <!-- 4. Selisih Kasir -->
+            <div class="bg-slate-100 border border-slate-300 rounded-2xl p-3.5 space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="font-extrabold text-slate-800 flex items-center gap-2">
+                  <span class="w-5 h-5 rounded-full bg-slate-700 text-white flex items-center justify-center text-[10px]">4</span>
+                  Uji Petik / Validasi Selisih Kasir
+                </span>
+                <span class="text-[10px] bg-slate-200 text-slate-800 font-bold px-2 py-0.5 rounded-full">Audit</span>
+              </div>
+              <div class="font-mono font-bold text-slate-900 bg-white p-2.5 rounded-xl border border-slate-200 text-xs">
+                Selisih Kasir = Uang Fisik Riil di Laci - Sisa Uang Kas Kecil
+              </div>
+              <div class="grid grid-cols-3 gap-2 pt-1 text-[11px] text-center">
+                <div class="p-2 rounded-xl bg-emerald-100 text-emerald-800 font-bold">
+                  Rp 0 = Sesuai (PAS)
+                </div>
+                <div class="p-2 rounded-xl bg-amber-100 text-amber-800 font-bold">
+                  &gt; Rp 0 = Kas Lebih
+                </div>
+                <div class="p-2 rounded-xl bg-rose-100 text-rose-800 font-bold">
+                  &lt; Rp 0 = Kas Kurang
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: PENGATURAN OPERASIONAL -->
+        <div id="tabContentPengaturan" class="space-y-4 hidden">
+          <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-2xl">
+            <h4 class="font-bold text-indigo-950 flex items-center gap-2 text-xs">
+              <i class="fa-solid fa-sliders text-indigo-600"></i> Konfigurasi Default Formulir
+            </h4>
+            <p class="text-[11px] text-indigo-800/80 mt-0.5">
+              Nilai default ini akan otomatis terisi saat form di-reset atau saat membuka tanggal baru.
+            </p>
+          </div>
+
+          <div class="space-y-3">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Nama Kasir / Shift Default</label>
+              <input type="text" id="settingDefaultKasir" placeholder="Contoh: Kasir Shift 1 (Ahmad)" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500 outline-none">
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Saldo Awal Modal Default (Rp)</label>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center font-bold text-slate-400 text-xs">Rp</span>
+                <input type="text" id="settingDefaultModal" placeholder="500.000" class="number-input w-full bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-3 py-2 text-xs font-bold focus:ring-2 focus:ring-indigo-500 outline-none">
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Nama Header Unit Usaha</label>
+              <input type="text" id="settingBengkelName" placeholder="Shop & Drive & Bima Motor" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500 outline-none">
+            </div>
+
+            <button type="button" id="btnSaveSettings" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-check"></i> Simpan Pengaturan
+            </button>
+          </div>
+        </div>
+
+        <!-- TAB 3: MANAJEMEN DATABASE -->
+        <div id="tabContentDatabase" class="space-y-4 hidden">
+          <!-- Database Stats -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+              <span class="text-[11px] text-slate-500 font-semibold block">Total Transaksi Kas</span>
+              <span class="text-xl font-black text-slate-800" id="dbTotalRecords">0 Record</span>
+            </div>
+            <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+              <span class="text-[11px] text-slate-500 font-semibold block">Engine Penyimpanan</span>
+              <span class="text-xs font-bold text-emerald-700 flex items-center gap-1.5 mt-1" id="dbEngineName">
+                <i class="fa-solid fa-circle-check text-emerald-500"></i> IndexedDB & LocalStorage
+              </span>
+            </div>
+          </div>
+
+          <!-- Backup Actions -->
+          <div class="space-y-2 border-t border-slate-100 pt-3">
+            <h4 class="font-bold text-slate-800 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+              <i class="fa-solid fa-download text-indigo-600"></i> Cadangkan Database (Backup)
+            </h4>
+            <p class="text-[11px] text-slate-500">Unduh seluruh rekapan kas & rincian biaya ke format file JSON atau SQL Dump.</p>
+            <div class="grid grid-cols-2 gap-2 pt-1">
+              <button type="button" id="btnBackupJson" class="w-full py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-900 font-bold rounded-xl border border-indigo-200 transition flex items-center justify-center gap-1.5 shadow-sm">
+                <i class="fa-solid fa-file-code text-indigo-600"></i> Cadangkan (.json)
+              </button>
+              <button type="button" id="btnBackupSql" class="w-full py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-900 font-bold rounded-xl border border-blue-200 transition flex items-center justify-center gap-1.5 shadow-sm">
+                <i class="fa-solid fa-database text-blue-600"></i> Cadangkan (.sql)
+              </button>
+            </div>
+          </div>
+
+          <!-- Restore Actions -->
+          <div class="space-y-2 border-t border-slate-100 pt-3">
+            <h4 class="font-bold text-slate-800 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+              <i class="fa-solid fa-upload text-emerald-600"></i> Pulihkan Database (Restore)
+            </h4>
+            <p class="text-[11px] text-slate-500">Impor file cadangan (.json) untuk memulihkan seluruh data kas.</p>
+            <input type="file" id="dbFileInput" accept=".json" class="hidden">
+            <button type="button" id="btnTriggerRestore" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-file-import"></i> Pilih File Cadangan (.json) untuk Dipulihkan
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
       <div class="bg-slate-50 px-5 py-3 border-t border-slate-200 flex justify-end">
-        <button type="button" id="btnCloseDbModal2" class="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-lg transition text-xs">
+        <button type="button" id="btnCloseDbModal2" class="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition text-xs">
           Tutup
         </button>
       </div>

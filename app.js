@@ -582,17 +582,68 @@ function setupCalendarControls() {
 }
 
 // -------------------------------------------------------------
-// DATABASE BACKUP, RESTORE & MODAL MANAGEMENT
+// SETTINGS, RUMUS & DATABASE MODAL MANAGEMENT
 // -------------------------------------------------------------
+const SETTINGS_KEY = 'kas_bengkel_app_settings_v1';
+
+function getAppSettings() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    return raw ? JSON.parse(raw) : {
+      defaultKasir: 'Ahmad (Shift 1)',
+      defaultModal: 500000,
+      bengkelName: 'Shop & Drive & Bima Motor'
+    };
+  } catch (e) {
+    return {
+      defaultKasir: 'Ahmad (Shift 1)',
+      defaultModal: 500000,
+      bengkelName: 'Shop & Drive & Bima Motor'
+    };
+  }
+}
+
+function saveAppSettings(settings) {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  } catch (e) {
+    console.error('Error saving settings:', e);
+  }
+}
+
+function switchModalTab(targetTab) {
+  const tabs = ['Rumus', 'Pengaturan', 'Database'];
+  tabs.forEach(tab => {
+    const btn = document.getElementById(`modalTabBtn${tab}`);
+    const content = document.getElementById(`tabContent${tab}`);
+    if (tab === targetTab) {
+      btn?.classList.remove('border-transparent', 'text-slate-500');
+      btn?.classList.add('border-blue-600', 'text-blue-900', 'font-extrabold');
+      content?.classList.remove('hidden');
+    } else {
+      btn?.classList.remove('border-blue-600', 'text-blue-900', 'font-extrabold');
+      btn?.classList.add('border-transparent', 'text-slate-500');
+      content?.classList.add('hidden');
+    }
+  });
+}
+
 function setupDatabaseModal() {
   const modal = document.getElementById('dbModal');
-  const btnOpen = document.getElementById('btnOpenDbModal');
+  const btnOpenSettings = document.getElementById('btnOpenSettingsModal');
+  const btnOpenDb = document.getElementById('btnOpenDbModal');
   const btnClose1 = document.getElementById('btnCloseDbModal');
   const btnClose2 = document.getElementById('btnCloseDbModal2');
   const btnBackupJson = document.getElementById('btnBackupJson');
   const btnBackupSql = document.getElementById('btnBackupSql');
   const btnTriggerRestore = document.getElementById('btnTriggerRestore');
   const fileInput = document.getElementById('dbFileInput');
+  const btnSaveSettings = document.getElementById('btnSaveSettings');
+
+  // Tab buttons
+  document.getElementById('modalTabBtnRumus')?.addEventListener('click', () => switchModalTab('Rumus'));
+  document.getElementById('modalTabBtnPengaturan')?.addEventListener('click', () => switchModalTab('Pengaturan'));
+  document.getElementById('modalTabBtnDatabase')?.addEventListener('click', () => switchModalTab('Database'));
 
   function updateDbStats() {
     const records = getSavedRecords();
@@ -600,13 +651,46 @@ function setupDatabaseModal() {
     if (totalEl) totalEl.innerText = `${records.length} Transaksi`;
   }
 
-  btnOpen?.addEventListener('click', () => {
+  function loadSettingsToModal() {
+    const settings = getAppSettings();
+    const inputKasir = document.getElementById('settingDefaultKasir');
+    const inputModal = document.getElementById('settingDefaultModal');
+    const inputBengkel = document.getElementById('settingBengkelName');
+
+    if (inputKasir) inputKasir.value = settings.defaultKasir || '';
+    if (inputModal) inputModal.value = Number(settings.defaultModal || 0).toLocaleString('id-ID');
+    if (inputBengkel) inputBengkel.value = settings.bengkelName || '';
+  }
+
+  // Open via Settings button (defaults to Tab 1: Rumus)
+  btnOpenSettings?.addEventListener('click', () => {
     updateDbStats();
+    loadSettingsToModal();
+    switchModalTab('Rumus');
+    modal?.classList.remove('hidden');
+  });
+
+  // Open via Database button (defaults to Tab 3: Database)
+  btnOpenDb?.addEventListener('click', () => {
+    updateDbStats();
+    loadSettingsToModal();
+    switchModalTab('Database');
     modal?.classList.remove('hidden');
   });
 
   [btnClose1, btnClose2].forEach(btn => {
     btn?.addEventListener('click', () => modal?.classList.add('hidden'));
+  });
+
+  // Save Settings
+  btnSaveSettings?.addEventListener('click', () => {
+    const defaultKasir = document.getElementById('settingDefaultKasir')?.value.trim() || 'Kasir';
+    const defaultModal = parseNumber(document.getElementById('settingDefaultModal')?.value || 0);
+    const bengkelName = document.getElementById('settingBengkelName')?.value.trim() || 'Shop & Drive & Bima Motor';
+
+    saveAppSettings({ defaultKasir, defaultModal, bengkelName });
+    alert('Pengaturan operasional berhasil disimpan!');
+    modal?.classList.add('hidden');
   });
 
   // Backup JSON
@@ -819,6 +903,7 @@ function downloadSpecificRecordPdf(id) {
 function renderHistoryTable() {
   const records = getSavedRecords();
   const tbody = document.getElementById('historyTableBody');
+  const tfoot = document.getElementById('historyTableFoot');
   const emptyNotice = document.getElementById('emptyHistoryNotice');
   const filterQuery = (document.getElementById('filterSearch')?.value || '').toLowerCase();
 
@@ -834,6 +919,7 @@ function renderHistoryTable() {
   });
 
   tbody.innerHTML = '';
+  if (tfoot) tfoot.innerHTML = '';
 
   if (filtered.length === 0) {
     if (emptyNotice) emptyNotice.classList.remove('hidden');
@@ -841,6 +927,17 @@ function renderHistoryTable() {
   }
 
   if (emptyNotice) emptyNotice.classList.add('hidden');
+
+  // Calculate Column Sums (Jumlah ke bawah)
+  const sumShopDrive = filtered.reduce((sum, r) => sum + (Number(r.penjualanShopDrive) || 0), 0);
+  const sumBimaMotor = filtered.reduce((sum, r) => sum + (Number(r.penjualanBimaMotor) || 0), 0);
+  const sumPemasukan = filtered.reduce((sum, r) => sum + (Number(r.totalPemasukan) || 0), 0);
+  const sumMandiri = filtered.reduce((sum, r) => sum + (Number(r.transferMandiri) || 0), 0);
+  const sumEdc = filtered.reduce((sum, r) => sum + (Number(r.cardEdc) || 0), 0);
+  const sumTradeIn = filtered.reduce((sum, r) => sum + (Number(r.penghematanTradeIn) || 0), 0);
+  const sumBiayaOps = filtered.reduce((sum, r) => sum + (Number(r.biayaOperasional) || 0), 0);
+  const sumSisaKas = filtered.reduce((sum, r) => sum + (Number(r.sisaUangKasKecil) || 0), 0);
+  const sumSelisih = filtered.reduce((sum, r) => sum + (Number(r.selisih) || 0), 0);
 
   filtered.forEach((rec) => {
     const tr = document.createElement('tr');
@@ -883,6 +980,38 @@ function renderHistoryTable() {
     `;
     tbody.appendChild(tr);
   });
+
+  // Render Footer Grand Total Row (Jumlah ke bawah)
+  if (tfoot) {
+    const totalSelisihBadge = sumSelisih === 0 
+      ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-emerald-200 text-emerald-950 shadow-sm">Pas (Rp 0)</span>'
+      : (sumSelisih > 0 
+          ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-amber-200 text-amber-950 shadow-sm">+${formatRupiah(sumSelisih)}</span>`
+          : `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-rose-200 text-rose-950 shadow-sm">${formatRupiah(sumSelisih)}</span>`);
+
+    tfoot.innerHTML = `
+      <tr class="bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 text-slate-900 border-t-2 border-b-2 border-slate-300 text-xs font-black shadow-inner">
+        <td colspan="2" class="py-3 px-3 whitespace-nowrap text-left">
+          <div class="flex items-center gap-2 text-slate-900">
+            <span class="w-6 h-6 rounded-lg bg-blue-950 text-amber-300 flex items-center justify-center text-xs shadow-sm">
+              <i class="fa-solid fa-calculator"></i>
+            </span>
+            <span class="text-xs uppercase tracking-wider font-extrabold text-blue-950">JUMLAH TOTAL (${filtered.length} Hari)</span>
+          </div>
+        </td>
+        <td class="py-3 px-3 text-right font-black text-amber-800 bg-amber-50/80 whitespace-nowrap border-l border-slate-200">${formatRupiah(sumShopDrive)}</td>
+        <td class="py-3 px-3 text-right font-black text-indigo-800 bg-indigo-50/80 whitespace-nowrap border-l border-slate-200">${formatRupiah(sumBimaMotor)}</td>
+        <td class="py-3 px-3 text-right font-black text-blue-950 bg-blue-100/90 whitespace-nowrap border-l border-slate-200">${formatRupiah(sumPemasukan)}</td>
+        <td class="py-3 px-3 text-right font-bold text-slate-800 whitespace-nowrap border-l border-slate-200">${formatRupiah(sumMandiri)}</td>
+        <td class="py-3 px-3 text-right font-bold text-slate-800 whitespace-nowrap border-l border-slate-200">${formatRupiah(sumEdc)}</td>
+        <td class="py-3 px-3 text-right font-bold text-slate-800 whitespace-nowrap border-l border-slate-200">${formatRupiah(sumTradeIn)}</td>
+        <td class="py-3 px-3 text-right font-black text-rose-700 bg-rose-50/80 whitespace-nowrap border-l border-slate-200">${formatRupiah(sumBiayaOps)}</td>
+        <td class="py-3 px-3 text-right font-black text-emerald-950 bg-emerald-200 whitespace-nowrap border-l border-emerald-300 text-xs">${formatRupiah(sumSisaKas)}</td>
+        <td class="py-3 px-3 text-center whitespace-nowrap border-l border-slate-200">${totalSelisihBadge}</td>
+        <td class="py-3 px-3 text-center whitespace-nowrap border-l border-slate-200 text-[11px] text-slate-500 font-bold">Total Rekap</td>
+      </tr>
+    `;
+  }
 
   // Attach actions
   tbody.querySelectorAll('.btn-load-record').forEach(btn => {
@@ -1005,9 +1134,10 @@ function clearAllHistory() {
 // Reset form
 function resetForm() {
   if (!confirm('Kosongkan semua isian form kas?')) return;
-  document.getElementById('inputKasir').value = '';
+  const settings = getAppSettings();
+  document.getElementById('inputKasir').value = settings.defaultKasir || '';
   document.getElementById('inputCatatan').value = '';
-  document.getElementById('inputSaldoAwal').value = '0';
+  document.getElementById('inputSaldoAwal').value = Number(settings.defaultModal || 0).toLocaleString('id-ID');
   document.getElementById('inputPenjualanShopDrive').value = '0';
   document.getElementById('inputPenjualanBimaMotor').value = '0';
   document.getElementById('inputTransferMandiri').value = '0';
@@ -1066,6 +1196,39 @@ function exportToExcelCSV() {
     ].join(';');
   });
 
+  // Calculate and append Grand Total row
+  const sumShopDrive = records.reduce((s, r) => s + (Number(r.penjualanShopDrive) || 0), 0);
+  const sumBimaMotor = records.reduce((s, r) => s + (Number(r.penjualanBimaMotor) || 0), 0);
+  const sumPemasukan = records.reduce((s, r) => s + (Number(r.totalPemasukan) || 0), 0);
+  const sumMandiri = records.reduce((s, r) => s + (Number(r.transferMandiri) || 0), 0);
+  const sumEdc = records.reduce((s, r) => s + (Number(r.cardEdc) || 0), 0);
+  const sumTradeIn = records.reduce((s, r) => s + (Number(r.penghematanTradeIn) || 0), 0);
+  const sumBiayaOps = records.reduce((s, r) => s + (Number(r.biayaOperasional) || 0), 0);
+  const sumTotalPengeluaran = records.reduce((s, r) => s + (Number(r.totalPengeluaranKas) || 0), 0);
+  const sumSisaKas = records.reduce((s, r) => s + (Number(r.sisaUangKasKecil) || 0), 0);
+  const sumFisik = records.reduce((s, r) => s + (Number(r.fisikRiil) || 0), 0);
+  const sumSelisih = records.reduce((s, r) => s + (Number(r.selisih) || 0), 0);
+
+  const totalRow = [
+    `"TOTAL KESELURUHAN"`,
+    `"${records.length} Transaksi"`,
+    `""`,
+    sumShopDrive,
+    sumBimaMotor,
+    sumPemasukan,
+    sumMandiri,
+    sumEdc,
+    sumTradeIn,
+    sumBiayaOps,
+    sumTotalPengeluaran,
+    sumSisaKas,
+    sumFisik,
+    sumSelisih,
+    `"Rekap Total Akumulasi Kas"`
+  ].join(';');
+
+  rows.push(totalRow);
+
   const csvContent = '\uFEFF' + headers.join(';') + '\n' + rows.join('\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -1100,6 +1263,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initialize Database Engine
   await openDatabase();
 
+  const settings = getAppSettings();
+
   // Setup reactive number inputs
   [
     'inputSaldoAwal', 
@@ -1108,21 +1273,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     'inputTransferMandiri', 
     'inputCardEdc', 
     'inputPenghematanTradeIn', 
-    'inputFisikRiil'
+    'inputFisikRiil',
+    'settingDefaultModal'
   ].forEach(id => {
     const el = document.getElementById(id);
     if (el) setupNumberInput(el);
   });
 
   // Set default initial demo values
-  document.getElementById('inputSaldoAwal').value = '500.000';
+  document.getElementById('inputSaldoAwal').value = Number(settings.defaultModal || 500000).toLocaleString('id-ID');
   document.getElementById('inputPenjualanShopDrive').value = '4.500.000';
   document.getElementById('inputPenjualanBimaMotor').value = '3.750.000';
   document.getElementById('inputTransferMandiri').value = '3.400.000';
   document.getElementById('inputCardEdc').value = '1.850.000';
   document.getElementById('inputPenghematanTradeIn').value = '250.000';
   document.getElementById('inputFisikRiil').value = '3.125.000';
-  document.getElementById('inputKasir').value = 'Ahmad (Shift 1)';
+  document.getElementById('inputKasir').value = settings.defaultKasir || 'Ahmad (Shift 1)';
 
   // Setup Modules
   setupCalendarControls();
