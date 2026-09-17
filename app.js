@@ -11,10 +11,7 @@ const DB_VERSION = 1;
 const STORAGE_KEY = 'kas_bengkel_shop_drive_bima_v1';
 
 let dbInstance = null;
-let currentExpenses = [
-  { id: 1, desc: 'Bensin Operasional / Antar Barang', amount: 50000 },
-  { id: 2, desc: 'Makan Siang Mekanik & Staff', amount: 75000 }
-];
+let currentExpenses = [];
 
 let currentCalDate = new Date();
 
@@ -377,36 +374,9 @@ function setupDenominationCounter() {
   });
 }
 
-// Seed default initial sample record if none exists
+// Initialize clean database if empty
 function initSampleDataIfEmpty() {
-  const records = getSavedRecords();
-  if (records.length === 0) {
-    const todayStr = new Date().toISOString().split('T')[0];
-    const sampleRecord = {
-      id: 'REC-' + Date.now(),
-      tanggal: todayStr,
-      kasir: 'Ahmad (Shift 1)',
-      catatan: 'Serah terima kasir lengkap, nota & struk EDC lengkap',
-      saldoAwal: 500000,
-      penjualanShopDrive: 4500000,
-      penjualanBimaMotor: 3750000,
-      totalPemasukan: 8250000,
-      transferMandiri: 3400000,
-      cardEdc: 1850000,
-      penghematanTradeIn: 250000,
-      biayaOperasional: 125000,
-      totalPengeluaranKas: 5625000,
-      sisaUangKasKecil: 3125000,
-      fisikRiil: 3125000,
-      selisih: 0,
-      expenses: [
-        { id: 1, desc: 'Bensin Operasional / Antar Barang', amount: 50000 },
-        { id: 2, desc: 'Makan Siang Mekanik & Staff', amount: 75000 }
-      ],
-      createdAt: new Date().toISOString()
-    };
-    saveRecordsToStorage([sampleRecord]);
-  }
+  // Clean initialization with no dummy data
 }
 
 // -------------------------------------------------------------
@@ -590,14 +560,14 @@ function getAppSettings() {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
     return raw ? JSON.parse(raw) : {
-      defaultKasir: 'Ahmad (Shift 1)',
-      defaultModal: 500000,
+      defaultKasir: '',
+      defaultModal: 0,
       bengkelName: 'Shop & Drive & Bima Motor'
     };
   } catch (e) {
     return {
-      defaultKasir: 'Ahmad (Shift 1)',
-      defaultModal: 500000,
+      defaultKasir: '',
+      defaultModal: 0,
       bengkelName: 'Shop & Drive & Bima Motor'
     };
   }
@@ -938,42 +908,60 @@ function renderHistoryTable() {
   const sumBiayaOps = filtered.reduce((sum, r) => sum + (Number(r.biayaOperasional) || 0), 0);
   const sumSisaKas = filtered.reduce((sum, r) => sum + (Number(r.sisaUangKasKecil) || 0), 0);
   const sumSelisih = filtered.reduce((sum, r) => sum + (Number(r.selisih) || 0), 0);
+  const takenCount = filtered.filter(r => r.sudahDiambil === true).length;
+  const untakenCount = filtered.length - takenCount;
 
   filtered.forEach((rec) => {
     const tr = document.createElement('tr');
     tr.className = 'hover:bg-slate-50/90 transition border-b border-slate-100';
 
+    const isTaken = rec.sudahDiambil === true;
+
     const statusBadge = rec.selisih === 0 
-      ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">Pas</span>'
+      ? '<span class="inline-flex items-center px-1.5 py-0.2 rounded text-[9.5px] font-bold bg-emerald-100 text-emerald-800">Pas</span>'
       : (rec.selisih > 0 
-          ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">+${formatRupiah(rec.selisih)}</span>`
-          : `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800">${formatRupiah(rec.selisih)}</span>`);
+          ? `<span class="inline-flex items-center px-1.5 py-0.2 rounded text-[9.5px] font-bold bg-amber-100 text-amber-800">+${formatRupiah(rec.selisih)}</span>`
+          : `<span class="inline-flex items-center px-1.5 py-0.2 rounded text-[9.5px] font-bold bg-rose-100 text-rose-800">${formatRupiah(rec.selisih)}</span>`);
+
+    const checklistStatus = `
+      <div class="flex flex-col items-center justify-center gap-0.5">
+        <label class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-bold cursor-pointer transition select-none ${
+          isTaken 
+            ? 'bg-emerald-50 border-emerald-300 text-emerald-800 hover:bg-emerald-100' 
+            : 'bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100'
+        }" title="Klik untuk menandai Sudah / Belum Diambil">
+          <input type="checkbox" class="chk-status-diambil w-3.5 h-3.5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer" data-id="${rec.id}" ${isTaken ? 'checked' : ''}>
+          <span>${isTaken ? '<i class="fa-solid fa-check text-emerald-600"></i> Sudah Diambil' : '<i class="fa-regular fa-clock text-amber-600"></i> Belum Diambil'}</span>
+        </label>
+        <div>${statusBadge}</div>
+      </div>
+    `;
 
     tr.innerHTML = `
-      <td class="py-3 px-3 font-bold text-slate-800 whitespace-nowrap">${rec.tanggal}</td>
-      <td class="py-3 px-3 whitespace-nowrap text-slate-600">${rec.kasir || '-'}</td>
-      <td class="py-3 px-3 text-right font-semibold text-amber-700 whitespace-nowrap">${formatRupiah(rec.penjualanShopDrive)}</td>
-      <td class="py-3 px-3 text-right font-semibold text-indigo-700 whitespace-nowrap">${formatRupiah(rec.penjualanBimaMotor)}</td>
-      <td class="py-3 px-3 text-right font-black text-blue-900 bg-blue-50/40 whitespace-nowrap">${formatRupiah(rec.totalPemasukan)}</td>
-      <td class="py-3 px-3 text-right text-slate-600 whitespace-nowrap">${formatRupiah(rec.transferMandiri)}</td>
-      <td class="py-3 px-3 text-right text-slate-600 whitespace-nowrap">${formatRupiah(rec.cardEdc)}</td>
-      <td class="py-3 px-3 text-right text-slate-600 whitespace-nowrap">${formatRupiah(rec.penghematanTradeIn)}</td>
-      <td class="py-3 px-3 text-right font-semibold text-rose-600 whitespace-nowrap">${formatRupiah(rec.biayaOperasional)}</td>
-      <td class="py-3 px-3 text-right font-black text-emerald-950 bg-emerald-50 whitespace-nowrap">${formatRupiah(rec.sisaUangKasKecil)}</td>
-      <td class="py-3 px-3 text-center whitespace-nowrap">${statusBadge}</td>
-      <td class="py-3 px-3 text-center whitespace-nowrap">
-        <div class="inline-flex items-center gap-1">
-          <button class="btn-load-record p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition" data-id="${rec.id}" title="Muat ke Form">
-            <i class="fa-solid fa-pen-to-square"></i>
+      <td class="py-2 px-2.5 font-bold text-slate-800 whitespace-nowrap">${rec.tanggal}</td>
+      <td class="py-2 px-2.5 whitespace-nowrap text-slate-600">${rec.kasir || '-'}</td>
+      <td class="py-2 px-2.5 text-right font-semibold text-amber-700 whitespace-nowrap">${formatRupiah(rec.penjualanShopDrive)}</td>
+      <td class="py-2 px-2.5 text-right font-semibold text-indigo-700 whitespace-nowrap">${formatRupiah(rec.penjualanBimaMotor)}</td>
+      <td class="py-2 px-2.5 text-right font-black text-blue-900 bg-blue-50/40 whitespace-nowrap">${formatRupiah(rec.totalPemasukan)}</td>
+      <td class="py-2 px-2.5 text-right text-slate-600 whitespace-nowrap">${formatRupiah(rec.transferMandiri)}</td>
+      <td class="py-2 px-2.5 text-right text-slate-600 whitespace-nowrap">${formatRupiah(rec.cardEdc)}</td>
+      <td class="py-2 px-2.5 text-right text-slate-600 whitespace-nowrap">${formatRupiah(rec.penghematanTradeIn)}</td>
+      <td class="py-2 px-2.5 text-right font-semibold text-rose-600 whitespace-nowrap">${formatRupiah(rec.biayaOperasional)}</td>
+      <td class="py-2 px-2.5 text-right font-black text-emerald-950 bg-emerald-50 whitespace-nowrap">${formatRupiah(rec.sisaUangKasKecil)}</td>
+      <td class="py-2 px-2.5 text-center whitespace-nowrap">${checklistStatus}</td>
+      <td class="py-2 px-2.5 text-center whitespace-nowrap">
+        <div class="inline-flex items-center gap-0.5">
+          <button class="btn-load-record p-1 text-blue-600 hover:bg-blue-50 rounded-md transition" data-id="${rec.id}" title="Muat ke Form">
+            <i class="fa-solid fa-pen-to-square text-xs"></i>
           </button>
-          <button class="btn-pdf-record p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition" data-id="${rec.id}" title="Unduh PDF">
-            <i class="fa-solid fa-file-pdf"></i>
+          <button class="btn-pdf-record p-1 text-rose-600 hover:bg-rose-50 rounded-md transition" data-id="${rec.id}" title="Unduh PDF">
+            <i class="fa-solid fa-file-pdf text-xs"></i>
           </button>
-          <button class="btn-print-record p-1.5 text-slate-700 hover:bg-slate-100 rounded-lg transition" data-id="${rec.id}" title="Cetak Rekap">
-            <i class="fa-solid fa-print"></i>
+          <button class="btn-print-record p-1 text-slate-700 hover:bg-slate-100 rounded-md transition" data-id="${rec.id}" title="Cetak Rekap">
+            <i class="fa-solid fa-print text-xs"></i>
           </button>
-          <button class="btn-delete-record p-1.5 text-rose-400 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition" data-id="${rec.id}" title="Hapus Data">
-            <i class="fa-solid fa-trash"></i>
+          <button class="btn-delete-record p-1 text-rose-400 hover:text-rose-700 hover:bg-rose-50 rounded-md transition" data-id="${rec.id}" title="Hapus Data">
+            <i class="fa-solid fa-trash text-xs"></i>
           </button>
         </div>
       </td>
@@ -984,36 +972,52 @@ function renderHistoryTable() {
   // Render Footer Grand Total Row (Jumlah ke bawah)
   if (tfoot) {
     const totalSelisihBadge = sumSelisih === 0 
-      ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-emerald-200 text-emerald-950 shadow-sm">Pas (Rp 0)</span>'
+      ? '<span class="inline-flex items-center px-1.5 py-0.2 rounded text-[9.5px] font-black bg-emerald-200 text-emerald-950 shadow-xs">Pas (Rp 0)</span>'
       : (sumSelisih > 0 
-          ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-amber-200 text-amber-950 shadow-sm">+${formatRupiah(sumSelisih)}</span>`
-          : `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-rose-200 text-rose-950 shadow-sm">${formatRupiah(sumSelisih)}</span>`);
+          ? `<span class="inline-flex items-center px-1.5 py-0.2 rounded text-[9.5px] font-black bg-amber-200 text-amber-950 shadow-xs">+${formatRupiah(sumSelisih)}</span>`
+          : `<span class="inline-flex items-center px-1.5 py-0.2 rounded text-[9.5px] font-black bg-rose-200 text-rose-950 shadow-xs">${formatRupiah(sumSelisih)}</span>`);
+
+    const takenSummary = `
+      <div class="flex flex-col items-center gap-0.5">
+        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">
+          <i class="fa-solid fa-check mr-1 text-emerald-600"></i> ${takenCount} Diambil
+        </span>
+        ${untakenCount > 0 ? `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-amber-100 text-amber-900 border border-amber-200"><i class="fa-regular fa-clock mr-1 text-amber-600"></i> ${untakenCount} Belum</span>` : ''}
+        <div class="mt-0.5">${totalSelisihBadge}</div>
+      </div>
+    `;
 
     tfoot.innerHTML = `
-      <tr class="bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 text-slate-900 border-t-2 border-b-2 border-slate-300 text-xs font-black shadow-inner">
-        <td colspan="2" class="py-3 px-3 whitespace-nowrap text-left">
-          <div class="flex items-center gap-2 text-slate-900">
-            <span class="w-6 h-6 rounded-lg bg-blue-950 text-amber-300 flex items-center justify-center text-xs shadow-sm">
-              <i class="fa-solid fa-calculator"></i>
-            </span>
-            <span class="text-xs uppercase tracking-wider font-extrabold text-blue-950">JUMLAH TOTAL (${filtered.length} Hari)</span>
+      <tr>
+        <td colspan="2" class="py-2 px-2.5 text-center uppercase tracking-wider font-extrabold text-slate-800 bg-slate-200/90 rounded-bl-lg">
+          <div class="flex items-center justify-center gap-1">
+            <i class="fa-solid fa-sigma text-blue-700"></i>
+            <span>TOTAL (${filtered.length} Hari)</span>
           </div>
         </td>
-        <td class="py-3 px-3 text-right font-black text-amber-800 bg-amber-50/80 whitespace-nowrap border-l border-slate-200">${formatRupiah(sumShopDrive)}</td>
-        <td class="py-3 px-3 text-right font-black text-indigo-800 bg-indigo-50/80 whitespace-nowrap border-l border-slate-200">${formatRupiah(sumBimaMotor)}</td>
-        <td class="py-3 px-3 text-right font-black text-blue-950 bg-blue-100/90 whitespace-nowrap border-l border-slate-200">${formatRupiah(sumPemasukan)}</td>
-        <td class="py-3 px-3 text-right font-bold text-slate-800 whitespace-nowrap border-l border-slate-200">${formatRupiah(sumMandiri)}</td>
-        <td class="py-3 px-3 text-right font-bold text-slate-800 whitespace-nowrap border-l border-slate-200">${formatRupiah(sumEdc)}</td>
-        <td class="py-3 px-3 text-right font-bold text-slate-800 whitespace-nowrap border-l border-slate-200">${formatRupiah(sumTradeIn)}</td>
-        <td class="py-3 px-3 text-right font-black text-rose-700 bg-rose-50/80 whitespace-nowrap border-l border-slate-200">${formatRupiah(sumBiayaOps)}</td>
-        <td class="py-3 px-3 text-right font-black text-emerald-950 bg-emerald-200 whitespace-nowrap border-l border-emerald-300 text-xs">${formatRupiah(sumSisaKas)}</td>
-        <td class="py-3 px-3 text-center whitespace-nowrap border-l border-slate-200">${totalSelisihBadge}</td>
-        <td class="py-3 px-3 text-center whitespace-nowrap border-l border-slate-200 text-[11px] text-slate-500 font-bold">Total Rekap</td>
+        <td class="py-2 px-2.5 text-right font-black text-amber-800 bg-amber-50/80 whitespace-nowrap border-l border-slate-200">${formatRupiah(sumShopDrive)}</td>
+        <td class="py-2 px-2.5 text-right font-black text-indigo-800 bg-indigo-50/80 whitespace-nowrap border-l border-slate-200">${formatRupiah(sumBimaMotor)}</td>
+        <td class="py-2 px-2.5 text-right font-black text-blue-950 bg-blue-100/90 whitespace-nowrap border-l border-slate-200">${formatRupiah(sumPemasukan)}</td>
+        <td class="py-2 px-2.5 text-right font-bold text-slate-800 whitespace-nowrap border-l border-slate-200">${formatRupiah(sumMandiri)}</td>
+        <td class="py-2 px-2.5 text-right font-bold text-slate-800 whitespace-nowrap border-l border-slate-200">${formatRupiah(sumEdc)}</td>
+        <td class="py-2 px-2.5 text-right font-bold text-slate-800 whitespace-nowrap border-l border-slate-200">${formatRupiah(sumTradeIn)}</td>
+        <td class="py-2 px-2.5 text-right font-black text-rose-700 bg-rose-50/80 whitespace-nowrap border-l border-slate-200">${formatRupiah(sumBiayaOps)}</td>
+        <td class="py-2 px-2.5 text-right font-black text-emerald-950 bg-emerald-200 whitespace-nowrap border-l border-emerald-300 text-xs">${formatRupiah(sumSisaKas)}</td>
+        <td class="py-2 px-2.5 text-center whitespace-nowrap border-l border-slate-200">${takenSummary}</td>
+        <td class="py-2 px-2.5 text-center whitespace-nowrap border-l border-slate-200 text-[10px] text-slate-500 font-bold">Total</td>
       </tr>
     `;
   }
 
   // Attach actions
+  tbody.querySelectorAll('.chk-status-diambil').forEach(chk => {
+    chk.addEventListener('change', (e) => {
+      const recId = e.target.dataset.id;
+      const isChecked = e.target.checked;
+      toggleSudahDiambil(recId, isChecked);
+    });
+  });
+
   tbody.querySelectorAll('.btn-load-record').forEach(btn => {
     btn.addEventListener('click', () => loadRecordToForm(btn.dataset.id));
   });
@@ -1068,8 +1072,11 @@ function saveCurrentRecord() {
   
   const existingIdx = records.findIndex(r => r.tanggal === tanggal);
   if (existingIdx !== -1) {
+    record.id = records[existingIdx].id || record.id;
+    record.sudahDiambil = records[existingIdx].sudahDiambil || false;
     records[existingIdx] = record;
   } else {
+    record.sudahDiambil = false;
     records.unshift(record);
   }
 
@@ -1078,6 +1085,18 @@ function saveCurrentRecord() {
   renderCalendar();
 
   alert(`Data Kas tanggal ${tanggal} (${kasir}) berhasil tersimpan ke database sistem!`);
+}
+
+// Toggle Checklist Status Pengambilan Kas
+function toggleSudahDiambil(id, status) {
+  const records = getSavedRecords();
+  const rec = records.find(r => r.id === id);
+  if (rec) {
+    rec.sudahDiambil = (typeof status === 'boolean') ? status : !rec.sudahDiambil;
+    saveRecordsToStorage(records);
+    renderHistoryTable();
+    renderCalendar();
+  }
 }
 
 // Load a record back to form
@@ -1172,11 +1191,13 @@ function exportToExcelCSV() {
     'Sisa Uang di Kas Kecil',
     'Uang Fisik Riil Laci',
     'Selisih Kas',
+    'Status Pengambilan Uang Fisik',
     'Catatan / Rincian Biaya Ops'
   ];
 
   const rows = records.map(r => {
-    const expenseSummary = (r.expenses || []).map(e => `${e.desc} (Rp ${e.amount})`).join('; ');
+    const expenseSummary = (r.expenses || []).map(e => `${e.nama || e.desc || 'Biaya'} (Rp ${e.nominal || e.amount || 0})`).join('; ');
+    const statusAmbil = r.sudahDiambil ? 'Sudah Diambil' : 'Belum Diambil';
     return [
       `"${r.tanggal}"`,
       `"${(r.kasir || '').replace(/"/g, '""')}"`,
@@ -1192,6 +1213,7 @@ function exportToExcelCSV() {
       r.sisaUangKasKecil || 0,
       r.fisikRiil || 0,
       r.selisih || 0,
+      `"${statusAmbil}"`,
       `"${(r.catatan ? r.catatan + ' | ' : '') + expenseSummary.replace(/"/g, '""')}"`
     ].join(';');
   });
@@ -1243,8 +1265,7 @@ function exportToExcelCSV() {
 // Download Blank Template CSV
 function downloadBlankTemplate() {
   const csvTemplate = '\uFEFFTanggal;Kasir / Shift;Saldo Awal Kas;Penjualan Shop & Drive;Penjualan Bima Motor;Total Pemasukan;Transfer Bank Mandiri;Card / EDC;Penghematan / Trade In;Pengeluaran Biaya Operasional;Total Pengeluaran Kas;Sisa Uang di Kas Kecil;Uang Fisik Riil Laci;Selisih Kas;Catatan / Rincian Biaya Ops\n' +
-    `2026-09-12;Shift 1 (Ahmad);500000;4500000;3750000;=D2+E2;3400000;1850000;250000;125000;=G2+H2+I2+J2;=(F2+C2)-K2;3125000;=M2-L2;Bensin Operasional Rp 50.000, Makan Siang Rp 75.000\n` +
-    ';;;;;;=SUM(D2:D2);=SUM(E2:E2);=SUM(F2:F2);;;;=SUM(K2:K2);;;;';
+    ';;;;;;=SUM(D2:D2);=SUM(E2:E2);=SUM(F2:F2);;;;=SUM(K2:K2);;;;\n';
 
   const blob = new Blob([csvTemplate], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -1280,15 +1301,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (el) setupNumberInput(el);
   });
 
-  // Set default initial demo values
-  document.getElementById('inputSaldoAwal').value = Number(settings.defaultModal || 500000).toLocaleString('id-ID');
-  document.getElementById('inputPenjualanShopDrive').value = '4.500.000';
-  document.getElementById('inputPenjualanBimaMotor').value = '3.750.000';
-  document.getElementById('inputTransferMandiri').value = '3.400.000';
-  document.getElementById('inputCardEdc').value = '1.850.000';
-  document.getElementById('inputPenghematanTradeIn').value = '250.000';
-  document.getElementById('inputFisikRiil').value = '3.125.000';
-  document.getElementById('inputKasir').value = settings.defaultKasir || 'Ahmad (Shift 1)';
+  // Set default initial clean values (no dummy data)
+  document.getElementById('inputSaldoAwal').value = Number(settings.defaultModal || 0).toLocaleString('id-ID');
+  document.getElementById('inputPenjualanShopDrive').value = '0';
+  document.getElementById('inputPenjualanBimaMotor').value = '0';
+  document.getElementById('inputTransferMandiri').value = '0';
+  document.getElementById('inputCardEdc').value = '0';
+  document.getElementById('inputPenghematanTradeIn').value = '0';
+  document.getElementById('inputFisikRiil').value = '0';
+  document.getElementById('inputKasir').value = settings.defaultKasir || '';
 
   // Setup Modules
   setupCalendarControls();
