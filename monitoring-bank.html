@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MONITORING REKENING BANK MANDIRI & RESTOK BAHAN - Shop & Drive & Bima Motor</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- html2pdf.js for Direct PDF Generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col antialiased">
+
+  <!-- TOP HEADER / NAVBAR -->
+  <header class="bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 text-white shadow-xl sticky top-0 z-30 border-b border-blue-800/40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap justify-between items-center gap-4">
+      <div class="flex items-center gap-3.5">
+        <a href="index.html" class="w-11 h-11 rounded-2xl bg-amber-400 hover:bg-amber-300 flex items-center justify-center text-blue-950 font-black text-xl shadow-lg shadow-amber-400/20 transition transform hover:scale-105" title="Kembali ke Dashboard Kas">
+          <i class="fa-solid fa-building-columns"></i>
+        </a>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white uppercase flex items-center gap-2">
+              <span>REKENING BANK MANDIRI</span>
+              <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-600/80 text-blue-100 border border-blue-400/30">Restok & Saldo</span>
+            </h1>
+          </div>
+          <div class="flex items-center gap-2 text-xs text-blue-200 mt-0.5">
+            <span class="px-2 py-0.5 rounded-full bg-blue-800/80 text-amber-300 font-bold border border-blue-700">Shop & Drive</span>
+            <span class="text-slate-400">•</span>
+            <span class="px-2 py-0.5 rounded-full bg-indigo-800/80 text-emerald-300 font-bold border border-indigo-700">Bima Motor</span>
+            <span class="text-slate-400">•</span>
+            <span id="bankSyncBadge" class="inline-flex items-center gap-1 font-semibold text-emerald-400">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Terhubung Kasir
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 sm:gap-2.5 text-xs flex-wrap">
+        <!-- Back to Kasir Button -->
+        <a href="index.html" class="bg-blue-800 hover:bg-blue-700 text-white px-3.5 py-2 rounded-xl font-bold transition flex items-center gap-1.5 shadow-md border border-blue-600">
+          <i class="fa-solid fa-arrow-left text-amber-300"></i>
+          <span>Kas Kecil Harian</span>
+        </a>
+
+        <!-- Tambah Restok Bahan Button -->
+        <button id="btnOpenRestokModal" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-3.5 py-2 rounded-xl font-black transition flex items-center gap-1.5 shadow-md shadow-emerald-950/30 border border-emerald-400/30">
+          <i class="fa-solid fa-cart-plus text-amber-300"></i>
+          <span>+ Restok Bahan</span>
+        </button>
+
+        <!-- Tambah Penarikan Button -->
+        <button id="btnOpenPenarikanModal" class="bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white px-3.5 py-2 rounded-xl font-black transition flex items-center gap-1.5 shadow-md shadow-rose-950/30 border border-rose-400/30">
+          <i class="fa-solid fa-hand-holding-dollar text-amber-300"></i>
+          <span>+ Penarikan Lain</span>
+        </button>
+
+        <!-- Settings Button -->
+        <button id="btnOpenBankSettings" class="bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white px-3 py-2 rounded-xl font-bold transition flex items-center gap-1.5 shadow-sm border border-slate-700">
+          <i class="fa-solid fa-gear text-amber-300"></i>
+          <span class="hidden sm:inline">Pengaturan</span>
+        </button>
+
+        <!-- Ekspor Excel Button -->
+        <button id="btnExportBankExcel" class="bg-emerald-700 hover:bg-emerald-600 text-white px-3.5 py-2 rounded-xl font-bold transition flex items-center gap-1.5 shadow-md">
+          <i class="fa-solid fa-file-excel"></i>
+          <span class="hidden sm:inline">Ekspor Excel</span>
+        </button>
+
+        <!-- Unduh PDF / Cetak Button -->
+        <button id="btnDownloadBankPdf" class="bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-600 hover:to-indigo-600 text-white px-3.5 py-2 rounded-xl font-bold transition flex items-center gap-1.5 shadow-md shadow-indigo-950/30 border border-indigo-500/30">
+          <i class="fa-solid fa-file-pdf text-amber-300"></i>
+          <span>PDF / Cetak</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
+
+    <!-- TOP SUMMARY STATS METRICS (REALTIME REKENING MANDIRI) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      
+      <!-- Card 1: Perkiraan Saldo Bank Mandiri (HIGHLIGHTED CARD) -->
+      <div class="sm:col-span-2 lg:col-span-2 relative overflow-hidden bg-gradient-to-br from-blue-900 via-indigo-950 to-slate-900 text-white rounded-2xl p-5 border border-blue-700/60 shadow-xl shadow-blue-950/20">
+        <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-blue-500/10 rounded-full blur-xl pointer-events-none"></div>
+        <div class="flex justify-between items-start mb-2">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+              <i class="fa-solid fa-wallet"></i> Perkiraan Saldo Bank Mandiri
+            </span>
+            <div class="text-[11px] text-blue-200/80 mt-0.5" id="bankAccountInfoLabel">
+              Rekening Operasional Bengkel
+            </div>
+          </div>
+          <span class="px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[11px] font-black flex items-center gap-1">
+            <i class="fa-solid fa-bolt"></i> Realtime
+          </span>
+        </div>
+        
+        <div class="text-3xl sm:text-4xl font-black text-amber-300 tracking-tight my-2" id="cardPerkiraanSaldoBank">Rp 0</div>
+        
+        <div class="pt-2 border-t border-white/10 flex flex-wrap items-center justify-between text-xs text-blue-100/90 gap-2">
+          <div>
+            Saldo Awal: <span class="font-bold text-white" id="cardSaldoAwalBank">Rp 0</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-emerald-300 font-bold" id="cardInflowBadge">+Rp 0</span> masuk
+            <span class="text-slate-400">•</span>
+            <span class="text-rose-300 font-bold" id="cardOutflowBadge">-Rp 0</span> keluar
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2: Total Transfer Mandiri + Card EDC (Inflow) -->
+      <div class="relative overflow-hidden bg-white rounded-2xl p-4 border border-blue-100 shadow-sm hover:shadow-md transition">
+        <div class="flex justify-between items-center text-slate-500 mb-1.5">
+          <span class="text-xs font-bold uppercase tracking-wider text-blue-700">Penerimaan Kasir</span>
+          <span class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-sm">
+            <i class="fa-solid fa-money-bill-transfer"></i>
+          </span>
+        </div>
+        <div class="text-xl sm:text-2xl font-black text-blue-950 tracking-tight" id="cardTotalPenerimaanKasir">Rp 0</div>
+        <div class="text-[11px] text-slate-500 mt-1 flex flex-col gap-0.5">
+          <div class="flex justify-between">
+            <span>Transfer Mandiri:</span> <b class="text-blue-800" id="cardSubTransferMandiri">Rp 0</b>
+          </div>
+          <div class="flex justify-between">
+            <span>Card / EDC:</span> <b class="text-indigo-800" id="cardSubCardEdc">Rp 0</b>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3: Total Pengeluaran Restok Bahan -->
+      <div class="relative overflow-hidden bg-white rounded-2xl p-4 border border-teal-100 shadow-sm hover:shadow-md transition">
+        <div class="flex justify-between items-center text-slate-500 mb-1.5">
+          <span class="text-xs font-bold uppercase tracking-wider text-teal-700">Restok / Pembelian</span>
+          <span class="w-8 h-8 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center text-sm">
+            <i class="fa-solid fa-boxes-packing"></i>
+          </span>
+        </div>
+        <div class="text-xl sm:text-2xl font-black text-teal-900 tracking-tight" id="cardTotalRestokBahan">Rp 0</div>
+        <div class="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
+          <span id="cardCountRestok">0 Transaksi Restok</span>
+          <span class="text-teal-700 font-bold">Mengurangi Saldo</span>
+        </div>
+      </div>
+
+      <!-- Card 4: Total Penarikan Keperluan Lain & Validasi Owner -->
+      <div class="relative overflow-hidden bg-white rounded-2xl p-4 border border-rose-100 shadow-sm hover:shadow-md transition">
+        <div class="flex justify-between items-center text-slate-500 mb-1.5">
+          <span class="text-xs font-bold uppercase tracking-wider text-rose-700">Penarikan Lain</span>
+          <span class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-sm">
+            <i class="fa-solid fa-hand-holding-dollar"></i>
+          </span>
+        </div>
+        <div class="text-xl sm:text-2xl font-black text-rose-900 tracking-tight" id="cardTotalPenarikanLain">Rp 0</div>
+        <div class="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
+          <span id="cardCountPenarikan">0 Penarikan</span>
+          <span id="cardPendingValidationBadge" class="text-amber-700 font-bold">0 Perlu Validasi</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- FILTER & ACTION CONTROLS BAR -->
+    <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex flex-wrap items-center justify-between gap-3">
+      <!-- Periode Filter Buttons -->
+      <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-bold flex-wrap">
+        <button type="button" class="btn-filter-period px-3 py-1.5 rounded-lg transition bg-white text-blue-900 shadow-sm" data-period="all">
+          Semua Data
+        </button>
+        <button type="button" class="btn-filter-period px-3 py-1.5 rounded-lg transition text-slate-600 hover:text-blue-900" data-period="this_month">
+          Bulan Ini
+        </button>
+        <button type="button" class="btn-filter-period px-3 py-1.5 rounded-lg transition text-slate-600 hover:text-blue-900" data-period="today">
+          Hari Ini
+        </button>
+      </div>
+
+      <!-- Search & Status Filter -->
+      <div class="flex items-center gap-2 flex-1 max-w-md">
+        <div class="relative flex-1">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+          <input type="text" id="filterBankSearch" placeholder="Cari supplier, faktur, kasir, keperluan..." 
+            class="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+        <select id="filterOwnerValidation" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none">
+          <option value="all">Semua Status Owner</option>
+          <option value="approved">✅ Disetujui Owner</option>
+          <option value="pending">⏳ Menunggu Validasi</option>
+          <option value="rejected">❌ Ditolak</option>
+        </select>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="flex items-center gap-2">
+        <button id="btnSyncFromKasir" class="px-3 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 text-xs font-bold border border-blue-200 transition flex items-center gap-1.5" title="Muat ulang sinkronisasi omset kasir">
+          <i class="fa-solid fa-rotate text-blue-600"></i>
+          <span>Sinkron Kasir</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- MAIN TABS NAVIGATION -->
+    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+      <div class="border-b border-slate-200 bg-slate-50/50 px-4 pt-2 flex items-center justify-between flex-wrap gap-2">
+        <div class="flex items-center gap-2 overflow-x-auto">
+          <!-- Tab 1: Restok Bahan -->
+          <button id="tabBtnRestok" class="tab-main-btn px-4 py-3 border-b-2 border-teal-600 font-extrabold text-teal-900 text-xs sm:text-sm flex items-center gap-2 transition whitespace-nowrap">
+            <span class="w-6 h-6 rounded-lg bg-teal-100 text-teal-800 flex items-center justify-center text-xs">
+              <i class="fa-solid fa-boxes-packing"></i>
+            </span>
+            <span>1. Pengeluaran Restok & Pembelian Bahan</span>
+            <span id="badgeTabRestokCount" class="px-2 py-0.5 rounded-full bg-teal-100 text-teal-800 text-[11px] font-bold">0</span>
+          </button>
+
+          <!-- Tab 2: Penarikan Keperluan Lain -->
+          <button id="tabBtnPenarikan" class="tab-main-btn px-4 py-3 border-b-2 border-transparent font-bold text-slate-500 hover:text-slate-800 text-xs sm:text-sm flex items-center gap-2 transition whitespace-nowrap">
+            <span class="w-6 h-6 rounded-lg bg-rose-100 text-rose-800 flex items-center justify-center text-xs">
+              <i class="fa-solid fa-hand-holding-dollar"></i>
+            </span>
+            <span>2. Penarikan Keperluan Lain</span>
+            <span id="badgeTabPenarikanCount" class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 text-[11px] font-bold">0</span>
+          </button>
+
+          <!-- Tab 3: Pemasukan Kasir (Transfer Mandiri + EDC) -->
+          <button id="tabBtnInflow" class="tab-main-btn px-4 py-3 border-b-2 border-transparent font-bold text-slate-500 hover:text-slate-800 text-xs sm:text-sm flex items-center gap-2 transition whitespace-nowrap">
+            <span class="w-6 h-6 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center text-xs">
+              <i class="fa-solid fa-money-bill-transfer"></i>
+            </span>
+            <span>3. Penerimaan Non-Tunai Kasir (Transfer & EDC)</span>
+            <span id="badgeTabInflowCount" class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[11px] font-bold">0</span>
+          </button>
+        </div>
+
+        <div class="py-2">
+          <span class="text-xs text-slate-400 italic flex items-center gap-1">
+            <i class="fa-solid fa-shield-check text-emerald-600"></i> Terlindungi Validasi Owner
+          </span>
+        </div>
+      </div>
+
+      <!-- TAB CONTENT 1: RESTOK & PEMBELIAN BAHAN BENGKEL -->
+      <div id="tabContentRestok" class="p-4 sm:p-6 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-2">
+          <div>
+            <h2 class="text-base font-black text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-cart-shopping text-teal-600"></i>
+              <span>Daftar Pengeluaran Restok & Pembelian Bahan</span>
+            </h2>
+            <p class="text-xs text-slate-500">Mencatat pembelian oli, aki, ban, sparepart, dan bahan operasional yang dibayar melalui Rekening Bank Mandiri.</p>
+          </div>
+          <button id="btnTambahRestokInline" class="px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+            <i class="fa-solid fa-plus"></i>
+            <span>Tambah Pembelian Bahan</span>
+          </button>
+        </div>
+
+        <!-- Tabel Restok Bahan -->
+        <div class="overflow-x-auto rounded-xl border border-slate-200">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-100/90 text-slate-700 font-extrabold border-b border-slate-200">
+                <th class="py-3 px-3 w-10 text-center">No</th>
+                <th class="py-3 px-3 whitespace-nowrap">Tanggal Bayar</th>
+                <th class="py-3 px-3 whitespace-nowrap">Supplier / Distributor</th>
+                <th class="py-3 px-3">Bahan / Sparepart</th>
+                <th class="py-3 px-3 whitespace-nowrap">No. Nota / Faktur</th>
+                <th class="py-3 px-3 text-right whitespace-nowrap">Nominal (Rp)</th>
+                <th class="py-3 px-3 text-center whitespace-nowrap">Validasi Owner</th>
+                <th class="py-3 px-3 text-center whitespace-nowrap">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tableBodyRestok" class="divide-y divide-slate-100 bg-white">
+              <!-- Dynamically rendered -->
+            </tbody>
+            <tfoot id="tableFootRestok" class="bg-teal-50/80 font-black text-teal-950 border-t-2 border-teal-200">
+              <!-- Dynamically rendered grand total -->
+            </tfoot>
+          </table>
+        </div>
+
+        <div id="emptyRestokNotice" class="hidden text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+          <i class="fa-solid fa-boxes-packing text-3xl text-slate-300 mb-2"></i>
+          <p class="text-xs text-slate-500 font-medium">Belum ada data pembelian bahan untuk filter ini.</p>
+          <button id="btnTambahRestokEmpty" class="mt-3 px-3 py-1.5 rounded-lg bg-teal-600 text-white text-xs font-bold hover:bg-teal-700 transition">
+            + Tambah Pembelian Pertama
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB CONTENT 2: PENARIKAN KEPERLUAN LAIN -->
+      <div id="tabContentPenarikan" class="p-4 sm:p-6 space-y-4 hidden">
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-2">
+          <div>
+            <h2 class="text-base font-black text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-hand-holding-dollar text-rose-600"></i>
+              <span>Daftar Penarikan untuk Keperluan Lain</span>
+            </h2>
+            <p class="text-xs text-slate-500">Mencatat prive owner, gaji/bonus, sewa, tagihan listrik, pajak, biaya admin bank, atau pengeluaran mendesak lainnya.</p>
+          </div>
+          <button id="btnTambahPenarikanInline" class="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+            <i class="fa-solid fa-plus"></i>
+            <span>Tambah Penarikan Lain</span>
+          </button>
+        </div>
+
+        <!-- Tabel Penarikan Lain -->
+        <div class="overflow-x-auto rounded-xl border border-slate-200">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-100/90 text-slate-700 font-extrabold border-b border-slate-200">
+                <th class="py-3 px-3 w-10 text-center">No</th>
+                <th class="py-3 px-3 whitespace-nowrap">Tanggal Penarikan</th>
+                <th class="py-3 px-3 whitespace-nowrap">Kategori Keperluan</th>
+                <th class="py-3 px-3">Keterangan & Tujuan</th>
+                <th class="py-3 px-3 whitespace-nowrap">Penerima Dana</th>
+                <th class="py-3 px-3 text-right whitespace-nowrap">Nominal (Rp)</th>
+                <th class="py-3 px-3 text-center whitespace-nowrap">Validasi Owner</th>
+                <th class="py-3 px-3 text-center whitespace-nowrap">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tableBodyPenarikan" class="divide-y divide-slate-100 bg-white">
+              <!-- Dynamically rendered -->
+            </tbody>
+            <tfoot id="tableFootPenarikan" class="bg-rose-50/80 font-black text-rose-950 border-t-2 border-rose-200">
+              <!-- Dynamically rendered grand total -->
+            </tfoot>
+          </table>
+        </div>
+
+        <div id="emptyPenarikanNotice" class="hidden text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+          <i class="fa-solid fa-money-bill-wave text-3xl text-slate-300 mb-2"></i>
+          <p class="text-xs text-slate-500 font-medium">Belum ada data penarikan untuk filter ini.</p>
+        </div>
+      </div>
+
+      <!-- TAB CONTENT 3: PENERIMAAN NON-TUNAI KASIR (TRANSFER MANDIRI + CARD EDC) -->
+      <div id="tabContentInflow" class="p-4 sm:p-6 space-y-4 hidden">
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-2">
+          <div>
+            <h2 class="text-base font-black text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-money-bill-transfer text-blue-600"></i>
+              <span>Penerimaan Non-Tunai Kasir (Transfer Mandiri & Card EDC)</span>
+            </h2>
+            <p class="text-xs text-slate-500">Data otomatis ditarik dari pembukuan kas harian bengkel Shop & Drive dan Bima Motor.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs bg-blue-50 text-blue-900 px-3 py-1.5 rounded-lg border border-blue-200 font-bold">
+              <i class="fa-solid fa-link text-blue-600 mr-1"></i> Auto-Sync Database Kas
+            </span>
+          </div>
+        </div>
+
+        <!-- Tabel Inflow Kasir -->
+        <div class="overflow-x-auto rounded-xl border border-slate-200">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-100/90 text-slate-700 font-extrabold border-b border-slate-200">
+                <th class="py-3 px-3 w-10 text-center">No</th>
+                <th class="py-3 px-3 whitespace-nowrap">Tanggal Transaksi</th>
+                <th class="py-3 px-3 whitespace-nowrap">Kasir / Shift</th>
+                <th class="py-3 px-3 text-right whitespace-nowrap">Transfer Mandiri</th>
+                <th class="py-3 px-3 text-right whitespace-nowrap">Card / EDC</th>
+                <th class="py-3 px-3 text-right whitespace-nowrap bg-blue-50/50">Total Masuk Bank</th>
+                <th class="py-3 px-3 text-center whitespace-nowrap">Status Rekening</th>
+                <th class="py-3 px-3 text-center whitespace-nowrap">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tableBodyInflow" class="divide-y divide-slate-100 bg-white">
+              <!-- Dynamically rendered from kas records -->
+            </tbody>
+            <tfoot id="tableFootInflow" class="bg-blue-50/80 font-black text-blue-950 border-t-2 border-blue-200">
+              <!-- Dynamically rendered grand total -->
+            </tfoot>
+          </table>
+        </div>
+
+        <div id="emptyInflowNotice" class="hidden text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+          <i class="fa-solid fa-receipt text-3xl text-slate-300 mb-2"></i>
+          <p class="text-xs text-slate-500 font-medium">Belum ada data transaksi non-tunai di database kasir.</p>
+          <a href="index.html" class="inline-block mt-3 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition">
+            Buka Kas Kecil & Input Transaksi
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- REKONSILIASI AKHIR & RINGKASAN SALDO CARD -->
+    <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white rounded-2xl p-5 border border-indigo-800/40 shadow-xl">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+        <div>
+          <span class="text-xs uppercase tracking-wider text-amber-400 font-extrabold flex items-center gap-1.5">
+            <i class="fa-solid fa-calculator"></i> Ringkasan Rumus Saldo
+          </span>
+          <div class="text-xs text-blue-200 mt-1">
+            [Saldo Awal + (Transfer + EDC)] - [Restok + Penarikan Lain]
+          </div>
+        </div>
+
+        <div class="bg-white/10 rounded-xl p-3 border border-white/10 text-center">
+          <div class="text-[11px] text-blue-200 uppercase font-bold">Total Inflow Bank</div>
+          <div class="text-base font-black text-emerald-400" id="summaryTotalInflow">Rp 0</div>
+        </div>
+
+        <div class="bg-white/10 rounded-xl p-3 border border-white/10 text-center">
+          <div class="text-[11px] text-blue-200 uppercase font-bold">Total Outflow Bank</div>
+          <div class="text-base font-black text-rose-400" id="summaryTotalOutflow">Rp 0</div>
+        </div>
+
+        <div class="bg-amber-400/20 rounded-xl p-3 border border-amber-400/40 text-center">
+          <div class="text-[11px] text-amber-300 uppercase font-black">Perkiraan Saldo Akhir</div>
+          <div class="text-lg font-black text-amber-300" id="summaryPerkiraanSaldo">Rp 0</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="bg-slate-900 text-slate-400 text-xs py-4 border-t border-slate-800 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 flex flex-wrap justify-between items-center gap-2">
+      <div>
+        <b>Monitor Kas & Rekening Bengkel</b> • Shop & Drive & Bima Motor &copy; 2026
+      </div>
+      <div class="flex items-center gap-4 text-[11px]">
+        <span class="text-emerald-400"><i class="fa-solid fa-shield-check"></i> Modul Rekening Mandiri v1.0</span>
+        <a href="index.html" class="text-amber-400 hover:underline">Ke Halaman Kasir</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============================================================== -->
+  <!-- MODALS SECTION -->
+  <!-- ============================================================== -->
+
+  <!-- MODAL 1: FORM TAMBAH / EDIT RESTOK BAHAN -->
+  <div id="modalRestok" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200 animate-in fade-in zoom-in duration-200">
+      <div class="bg-gradient-to-r from-teal-900 to-slate-900 px-6 py-4 text-white flex justify-between items-center">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-teal-500 text-white flex items-center justify-center font-bold">
+            <i class="fa-solid fa-boxes-packing"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-base" id="modalRestokTitle">Catat Pembelian / Restok Bahan</h3>
+            <p class="text-xs text-teal-200">Mengurangi Saldo Rekening Bank Mandiri</p>
+          </div>
+        </div>
+        <button type="button" class="btn-close-modal text-slate-300 hover:text-white text-lg p-1" data-modal="modalRestok">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="formRestok" class="p-6 space-y-4">
+        <input type="hidden" id="inputRestokId">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- Tanggal Pembayaran -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">
+              <i class="fa-regular fa-calendar text-teal-600 mr-1"></i> Tanggal Pembayaran <span class="text-rose-500">*</span>
+            </label>
+            <input type="date" id="inputRestokTanggal" required 
+              class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-teal-500 outline-none">
+          </div>
+
+          <!-- Supplier / Toko -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">
+              <i class="fa-solid fa-store text-teal-600 mr-1"></i> Supplier / Distributor <span class="text-rose-500">*</span>
+            </label>
+            <input type="text" id="inputRestokSupplier" placeholder="Nama Toko / Distributor..." required 
+              class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-teal-500 outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- Kategori Bahan -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">
+              <i class="fa-solid fa-tag text-teal-600 mr-1"></i> Kategori Bahan
+            </label>
+            <select id="inputRestokKategori" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-teal-500 outline-none">
+              <option value="Aki & Baterai">Aki & Baterai</option>
+              <option value="Oli & Pelumas">Oli & Pelumas</option>
+              <option value="Ban Mobil / Motor">Ban Mobil / Motor</option>
+              <option value="Sparepart & Onderdil">Sparepart & Onderdil</option>
+              <option value="Bahan Habis Pakai">Bahan Habis Pakai / Lap / Sabun</option>
+              <option value="Lain-lain">Lain-lain</option>
+            </select>
+          </div>
+
+          <!-- No. Nota / Faktur -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">
+              <i class="fa-solid fa-receipt text-teal-600 mr-1"></i> No. Nota / Faktur
+            </label>
+            <input type="text" id="inputRestokNota" placeholder="Contoh: INV-2026/09/01" 
+              class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-teal-500 outline-none">
+          </div>
+        </div>
+
+        <!-- Rincian Bahan / Nama Barang -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">
+            <i class="fa-solid fa-list-check text-teal-600 mr-1"></i> Rincian Barang / Keterangan <span class="text-rose-500">*</span>
+          </label>
+          <input type="text" id="inputRestokNama" placeholder="Contoh: Restok Aki GS Astra 5 pcs + Oli Castrol 2 Karton..." required 
+            class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-teal-500 outline-none">
+        </div>
+
+        <!-- Nominal Pembayaran -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">
+            <i class="fa-solid fa-money-bill-wave text-teal-600 mr-1"></i> Nominal Pembayaran (Rp) <span class="text-rose-500">*</span>
+          </label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-xs font-bold text-slate-400">Rp</span>
+            <input type="text" id="inputRestokNominal" placeholder="0" required 
+              class="w-full bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-3 py-2 text-sm font-black text-teal-900 focus:bg-white focus:ring-2 focus:ring-teal-500 outline-none text-right number-input">
+          </div>
+        </div>
+
+        <!-- Status Validasi Owner Awal -->
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+          <label class="block text-xs font-bold text-slate-700 mb-1">
+            <i class="fa-solid fa-user-shield text-amber-600 mr-1"></i> Status Validasi Owner
+          </label>
+          <select id="inputRestokStatusOwner" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-teal-500 outline-none">
+            <option value="pending">⏳ Menunggu Validasi Owner</option>
+            <option value="approved">✅ Disetujui Owner (Lunas Disetujui)</option>
+            <option value="rejected">❌ Ditolak / Ditunda</option>
+          </select>
+          <p class="text-[11px] text-slate-400 mt-1">Owner dapat mengubah status validasi kapan saja melalui tombol verifikasi.</p>
+        </div>
+
+        <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
+          <button type="button" class="btn-close-modal px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition" data-modal="modalRestok">
+            Batal
+          </button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-black transition flex items-center gap-1.5 shadow-md shadow-teal-700/20">
+            <i class="fa-solid fa-check"></i>
+            <span>Simpan Restok Bahan</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: FORM TAMBAH / EDIT PENARIKAN KEPERLUAN LAIN -->
+  <div id="modalPenarikan" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200 animate-in fade-in zoom-in duration-200">
+      <div class="bg-gradient-to-r from-rose-900 to-slate-900 px-6 py-4 text-white flex justify-between items-center">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-rose-500 text-white flex items-center justify-center font-bold">
+            <i class="fa-solid fa-hand-holding-dollar"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-base" id="modalPenarikanTitle">Catat Penarikan Keperluan Lain</h3>
+            <p class="text-xs text-rose-200">Mengurangi Saldo Rekening Bank Mandiri</p>
+          </div>
+        </div>
+        <button type="button" class="btn-close-modal text-slate-300 hover:text-white text-lg p-1" data-modal="modalPenarikan">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="formPenarikan" class="p-6 space-y-4">
+        <input type="hidden" id="inputPenarikanId">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- Tanggal Penarikan -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">
+              <i class="fa-regular fa-calendar text-rose-600 mr-1"></i> Tanggal Penarikan <span class="text-rose-500">*</span>
+            </label>
+            <input type="date" id="inputPenarikanTanggal" required 
+              class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-rose-500 outline-none">
+          </div>
+
+          <!-- Kategori Penarikan -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">
+              <i class="fa-solid fa-tag text-rose-600 mr-1"></i> Kategori Keperluan <span class="text-rose-500">*</span>
+            </label>
+            <select id="inputPenarikanKategori" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-rose-500 outline-none">
+              <option value="Prive / Bagi Hasil Owner">Prive / Penarikan Owner</option>
+              <option value="Gaji & Insentif Karyawan">Gaji & Insentif Karyawan</option>
+              <option value="Sewa Tempat & Utilitas">Sewa Tempat & Utilitas / Listrik / Air</option>
+              <option value="Pajak & Legalitas">Pajak, BPJS & Legalitas</option>
+              <option value="Biaya Admin / Bunga Bank">Biaya Admin / Operasional Bank</option>
+              <option value="Keperluan Darurat / Lainnya">Keperluan Darurat / Lainnya</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Keterangan & Tujuan Penarikan -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">
+            <i class="fa-solid fa-file-lines text-rose-600 mr-1"></i> Keterangan & Tujuan Penarikan <span class="text-rose-500">*</span>
+          </label>
+          <input type="text" id="inputPenarikanKeterangan" placeholder="Contoh: Pengambilan Prive Owner untuk keperluan X..." required 
+            class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-rose-500 outline-none">
+        </div>
+
+        <!-- Penerima Dana -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">
+            <i class="fa-solid fa-user text-rose-600 mr-1"></i> Penerima Dana / Nama Rekening Tujuan
+          </label>
+          <input type="text" id="inputPenarikanPenerima" placeholder="Contoh: Bapak Owner / Rekening BCA xxxx" 
+            class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-rose-500 outline-none">
+        </div>
+
+        <!-- Nominal Penarikan -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">
+            <i class="fa-solid fa-money-bill-wave text-rose-600 mr-1"></i> Nominal Penarikan (Rp) <span class="text-rose-500">*</span>
+          </label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-xs font-bold text-slate-400">Rp</span>
+            <input type="text" id="inputPenarikanNominal" placeholder="0" required 
+              class="w-full bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-3 py-2 text-sm font-black text-rose-900 focus:bg-white focus:ring-2 focus:ring-rose-500 outline-none text-right number-input">
+          </div>
+        </div>
+
+        <!-- Status Validasi Owner Awal -->
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+          <label class="block text-xs font-bold text-slate-700 mb-1">
+            <i class="fa-solid fa-user-shield text-amber-600 mr-1"></i> Status Validasi Owner
+          </label>
+          <select id="inputPenarikanStatusOwner" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-rose-500 outline-none">
+            <option value="pending">⏳ Menunggu Validasi Owner</option>
+            <option value="approved">✅ Disetujui Owner</option>
+            <option value="rejected">❌ Ditolak / Dibatalkan</option>
+          </select>
+        </div>
+
+        <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
+          <button type="button" class="btn-close-modal px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition" data-modal="modalPenarikan">
+            Batal
+          </button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-black transition flex items-center gap-1.5 shadow-md shadow-rose-700/20">
+            <i class="fa-solid fa-check"></i>
+            <span>Simpan Penarikan</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 3: PENGATURAN REKENING & OWNER -->
+  <div id="modalBankSettings" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200">
+      <div class="bg-gradient-to-r from-slate-900 to-indigo-950 px-6 py-4 text-white flex justify-between items-center">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center font-bold">
+            <i class="fa-solid fa-building-columns"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-base">Pengaturan Rekening & Owner</h3>
+            <p class="text-xs text-blue-200">Konfigurasi Saldo Awal & Parameter</p>
+          </div>
+        </div>
+        <button type="button" class="btn-close-modal text-slate-300 hover:text-white text-lg p-1" data-modal="modalBankSettings">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <!-- Saldo Awal Rekening Mandiri -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">
+            <i class="fa-solid fa-vault text-blue-600 mr-1"></i> Saldo Awal Rekening Bank Mandiri (Rp)
+          </label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-xs font-bold text-slate-400">Rp</span>
+            <input type="text" id="settingBankSaldoAwal" placeholder="0" 
+              class="w-full bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-3 py-2 text-sm font-black text-blue-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-right number-input">
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Saldo awal acuan rekening sebelum penambahan omset & pengeluaran.</p>
+        </div>
+
+        <!-- Nomor Rekening & Nama Bank -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">
+            <i class="fa-solid fa-credit-card text-blue-600 mr-1"></i> Keterangan Rekening
+          </label>
+          <input type="text" id="settingBankAccountName" placeholder="Contoh: Bank Mandiri - 13700xxxxxxxx a/n Bengkel" 
+            class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+
+        <!-- Nama Owner -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">
+            <i class="fa-solid fa-user-tie text-blue-600 mr-1"></i> Nama Owner / Validator
+          </label>
+          <input type="text" id="settingBankOwnerName" placeholder="Contoh: Bapak Hendra / Owner" 
+            class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+
+        <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
+          <button type="button" class="btn-close-modal px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition" data-modal="modalBankSettings">
+            Tutup
+          </button>
+          <button type="button" id="btnSaveBankSettings" class="px-5 py-2 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-xs font-black transition flex items-center gap-1.5 shadow-md">
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span>Simpan Pengaturan</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 4: OWNER VALIDATION DIALOG -->
+  <div id="modalOwnerValidation" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden border border-slate-200">
+      <div class="bg-gradient-to-r from-amber-600 to-slate-900 px-6 py-4 text-white flex justify-between items-center">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-white text-amber-600 flex items-center justify-center font-black">
+            <i class="fa-solid fa-user-shield"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-sm">Verifikasi & Validasi Owner</h3>
+          </div>
+        </div>
+        <button type="button" class="btn-close-modal text-slate-300 hover:text-white text-lg p-1" data-modal="modalOwnerValidation">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-5 space-y-3.5 text-xs">
+        <input type="hidden" id="validateItemId">
+        <input type="hidden" id="validateItemType">
+
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
+          <div class="text-slate-500 font-semibold" id="validateItemDesc">Deskripsi Item</div>
+          <div class="text-base font-black text-slate-900" id="validateItemAmount">Rp 0</div>
+          <div class="text-[11px] text-slate-400" id="validateItemDate">Tanggal: -</div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Catatan Validasi Owner (Opsional)</label>
+          <input type="text" id="validateOwnerNote" placeholder="Catatan approval atau instruksi..." 
+            class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-amber-500 outline-none">
+        </div>
+
+        <div class="pt-2 flex items-center justify-between gap-2">
+          <button type="button" id="btnRejectByOwner" class="flex-1 py-2 px-3 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-800 font-bold transition flex items-center justify-center gap-1">
+            <i class="fa-solid fa-xmark"></i> Tolak
+          </button>
+          <button type="button" id="btnApproveByOwner" class="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold transition flex items-center justify-center gap-1 shadow-md shadow-emerald-700/20">
+            <i class="fa-solid fa-check"></i> Setujui (Approve)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- PRINT & PDF EXPORT CONTAINER (A4 FORMAT) -->
+  <!-- ============================================================== -->
+  <div id="printBankArea" class="hidden">
+    <div id="pdfBankExportContainer" class="p-6 bg-white text-slate-900 text-xs font-sans space-y-4 max-w-4xl mx-auto">
+      
+      <!-- Header Laporan -->
+      <div class="border-b-2 border-slate-800 pb-3 flex justify-between items-start">
+        <div>
+          <h1 class="text-lg font-black uppercase tracking-tight text-slate-900">
+            BERITA ACARA REKONSILIASI REKENING BANK MANDIRI & RESTOK BAHAN
+          </h1>
+          <div class="text-xs font-bold text-blue-900 mt-0.5">
+            Bengkel Shop & Drive & Bima Motor
+          </div>
+          <div class="text-[11px] text-slate-500" id="printBankInfo">
+            Rekening: Bank Mandiri • Dicetak pada: <span id="printGeneratedTime">-</span>
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="text-xs font-extrabold px-3 py-1 bg-slate-100 rounded-lg border border-slate-300" id="printPeriodeLabel">
+            Periode: Semua Data
+          </div>
+        </div>
+      </div>
+
+      <!-- Ringkasan Saldo Box -->
+      <div class="grid grid-cols-4 gap-2 text-center">
+        <div class="p-2 bg-slate-50 rounded border border-slate-200">
+          <div class="text-[10px] text-slate-500 uppercase font-bold">Saldo Awal</div>
+          <div class="text-xs font-bold text-slate-800" id="printSaldoAwal">Rp 0</div>
+        </div>
+        <div class="p-2 bg-blue-50 rounded border border-blue-200">
+          <div class="text-[10px] text-blue-800 uppercase font-bold">Total Inflow (Transfer+EDC)</div>
+          <div class="text-xs font-black text-blue-900" id="printTotalInflow">Rp 0</div>
+        </div>
+        <div class="p-2 bg-rose-50 rounded border border-rose-200">
+          <div class="text-[10px] text-rose-800 uppercase font-bold">Total Outflow (Restok+Lain)</div>
+          <div class="text-xs font-black text-rose-900" id="printTotalOutflow">Rp 0</div>
+        </div>
+        <div class="p-2 bg-amber-50 rounded border border-amber-300">
+          <div class="text-[10px] text-amber-900 uppercase font-black">Perkiraan Saldo Akhir</div>
+          <div class="text-xs font-black text-amber-950" id="printPerkiraanSaldo">Rp 0</div>
+        </div>
+      </div>
+
+      <!-- Section Restok Bahan di Cetak -->
+      <div class="space-y-1.5">
+        <div class="font-extrabold text-xs text-slate-800 border-b border-slate-300 pb-1 flex justify-between">
+          <span>1. RINCIAN PENGELUARAN RESTOK / PEMBELIAN BAHAN</span>
+          <span class="text-teal-800 font-black" id="printSubtotalRestok">Rp 0</span>
+        </div>
+        <table class="w-full text-left text-[11px] border border-slate-300">
+          <thead>
+            <tr class="bg-slate-100 font-bold border-b border-slate-300">
+              <th class="p-1.5 w-6 text-center">No</th>
+              <th class="p-1.5">Tanggal</th>
+              <th class="p-1.5">Supplier / Nota</th>
+              <th class="p-1.5">Rincian Bahan / Sparepart</th>
+              <th class="p-1.5 text-right">Nominal (Rp)</th>
+              <th class="p-1.5 text-center">Validasi Owner</th>
+            </tr>
+          </thead>
+          <tbody id="printTableRestokBody" class="divide-y divide-slate-200"></tbody>
+        </table>
+      </div>
+
+      <!-- Section Penarikan Lain di Cetak -->
+      <div class="space-y-1.5">
+        <div class="font-extrabold text-xs text-slate-800 border-b border-slate-300 pb-1 flex justify-between">
+          <span>2. RINCIAN PENARIKAN KEPERLUAN LAIN</span>
+          <span class="text-rose-800 font-black" id="printSubtotalPenarikan">Rp 0</span>
+        </div>
+        <table class="w-full text-left text-[11px] border border-slate-300">
+          <thead>
+            <tr class="bg-slate-100 font-bold border-b border-slate-300">
+              <th class="p-1.5 w-6 text-center">No</th>
+              <th class="p-1.5">Tanggal</th>
+              <th class="p-1.5">Kategori & Keterangan</th>
+              <th class="p-1.5">Penerima Dana</th>
+              <th class="p-1.5 text-right">Nominal (Rp)</th>
+              <th class="p-1.5 text-center">Validasi Owner</th>
+            </tr>
+          </thead>
+          <tbody id="printTablePenarikanBody" class="divide-y divide-slate-200"></tbody>
+        </table>
+      </div>
+
+      <!-- Tanda Tangan Section -->
+      <div class="pt-6 grid grid-cols-2 gap-8 text-center text-xs">
+        <div>
+          <div class="text-slate-500 mb-12">Petugas Pemegang Rekening / Kasir,</div>
+          <div class="font-bold border-t border-slate-400 pt-1 w-48 mx-auto">( Staff Keuangan Bengkel )</div>
+        </div>
+        <div>
+          <div class="text-slate-500 mb-12">Disetujui & Divalidasi oleh Owner,</div>
+          <div class="font-bold border-t border-slate-400 pt-1 w-48 mx-auto" id="printSignOwner">( Pemilik / Owner )</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="bank.js"></script>
+</body>
+</html>
