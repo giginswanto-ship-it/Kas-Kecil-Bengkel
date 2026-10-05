@@ -1236,15 +1236,16 @@ function renderHistoryTable() {
           : `<span class="inline-flex items-center px-1.5 py-0.2 rounded text-[9.5px] font-bold bg-rose-100 text-rose-800">${formatRupiah(rec.selisih)}</span>`);
 
     const checklistStatus = `
-      <div class="flex flex-col items-center justify-center gap-0.5">
-        <label class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[9px] font-bold cursor-pointer transition select-none ${
+      <div class="flex flex-col items-center justify-center gap-1">
+        <button type="button" class="btn-owner-status inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[9.5px] font-extrabold transition shadow-xs select-none active:scale-95 cursor-pointer ${
           isTaken 
-            ? 'bg-emerald-50 border-emerald-300 text-emerald-800 hover:bg-emerald-100' 
-            : 'bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100'
-        }" title="Klik untuk menandai Sudah / Belum Diambil">
-          <input type="checkbox" class="chk-status-diambil w-3 h-3 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer" data-id="${rec.id}" ${isTaken ? 'checked' : ''}>
+            ? 'bg-emerald-100/90 border-emerald-300 text-emerald-950 hover:bg-emerald-200 hover:border-emerald-400' 
+            : 'bg-amber-100/90 border-amber-300 text-amber-950 hover:bg-amber-200 hover:border-amber-400'
+        }" data-id="${rec.id}" title="Klik untuk otorisasi Owner (PIN 2209) & ubah status">
+          <i class="${isTaken ? 'fa-solid fa-circle-check text-emerald-600' : 'fa-regular fa-clock text-amber-600'} text-[10px]"></i>
           <span>${isTaken ? 'Diambil' : 'Belum'}</span>
-        </label>
+          <i class="fa-solid fa-lock text-[8px] text-slate-500/80 ml-0.5"></i>
+        </button>
         <div>${statusBadge}</div>
       </div>
     `;
@@ -1329,11 +1330,11 @@ function renderHistoryTable() {
   }
 
   // Attach actions
-  tbody.querySelectorAll('.chk-status-diambil').forEach(chk => {
-    chk.addEventListener('change', (e) => {
-      const recId = e.target.dataset.id;
-      const isChecked = e.target.checked;
-      toggleSudahDiambil(recId, isChecked);
+  tbody.querySelectorAll('.btn-owner-status').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const recId = btn.getAttribute('data-id');
+      promptOwnerPinForStatus(recId);
     });
   });
 
@@ -1429,13 +1430,46 @@ function saveCurrentRecord() {
   alert(`Data Kas ${formatTanggalIndo(tanggal, true)} (${kasir}) berhasil tersimpan ke sistem & kalender kas!`);
 }
 
-// Toggle Checklist Status Pengambilan Kas
+// Dialog verifikasi PIN Owner sebelum mengubah status pengambilan kas
+function promptOwnerPinForStatus(recId) {
+  const records = getSavedRecords();
+  const rec = records.find(r => r.id === recId);
+  if (!rec) return;
+
+  const currentStatus = rec.sudahDiambil === true;
+  const targetStatus = !currentStatus;
+  const targetStatusLabel = targetStatus ? 'SUDAH DIAMBIL' : 'BELUM DIAMBIL';
+  const targetTanggal = formatTanggalIndo(rec.tanggal, false);
+
+  openOwnerPinModal(
+    () => {
+      toggleSudahDiambil(recId, targetStatus);
+      alert(`[OTORISASI OWNER BERHASIL]\n\nStatus kas tanggal ${targetTanggal} (${rec.kasir || 'Kasir'}) berhasil diubah menjadi: ${targetStatusLabel}.`);
+    },
+    'Status Kas (Owner)',
+    'Otorisasi Khusus Owner',
+    `Ubah status kas tanggal ${targetTanggal} menjadi "${targetStatusLabel}". Masukkan PIN Owner (2209) untuk verifikasi:`
+  );
+}
+
+// Toggle Checklist Status Pengambilan Kas (Khusus Owner)
 function toggleSudahDiambil(id, status) {
   const records = getSavedRecords();
   const rec = records.find(r => r.id === id);
   if (rec) {
     rec.sudahDiambil = (typeof status === 'boolean') ? status : !rec.sudahDiambil;
+    rec.statusUpdatedAt = new Date().toISOString();
     saveRecordsToStorage(records);
+
+    // Sync ke server backend lokal jika aktif
+    try {
+      fetch('http://localhost:3000/api/records', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(rec)
+      }).catch(() => {});
+    } catch (e) {}
+
     renderHistoryTable();
     renderCalendar();
   }
@@ -1684,6 +1718,45 @@ function downloadBlankTemplate() {
 const OWNER_SECURITY_PIN = '2209';
 const OWNER_AUTH_SESSION_KEY = 'owner_pin_auth_session';
 
+let pendingOwnerPinAction = null;
+
+function openOwnerPinModal(callback, title = 'Akses Khusus Owner', subtitle = 'Rekening Mandiri & Restok', desc = 'Halaman ini dilindungi. Masukkan PIN keamanan Owner untuk melanjutkan:') {
+  const modal = document.getElementById('ownerPinModal');
+  const inputPin = document.getElementById('inputOwnerPin');
+  const errEl = document.getElementById('ownerPinError');
+  const titleEl = document.getElementById('ownerPinModalTitle');
+  const subtitleEl = document.getElementById('ownerPinModalSubtitle');
+  const descEl = document.getElementById('ownerPinModalDesc');
+
+  if (!modal || !inputPin) return;
+
+  pendingOwnerPinAction = typeof callback === 'function' ? callback : null;
+
+  if (titleEl) titleEl.textContent = title;
+  if (subtitleEl) subtitleEl.textContent = subtitle;
+  if (descEl) descEl.textContent = desc;
+
+  inputPin.value = '';
+  if (errEl) errEl.classList.add('hidden');
+  inputPin.classList.remove('border-rose-500', 'bg-rose-50/50');
+  modal.classList.remove('hidden');
+  setTimeout(() => inputPin.focus(), 100);
+}
+
+function closeOwnerPinModal() {
+  const modal = document.getElementById('ownerPinModal');
+  const inputPin = document.getElementById('inputOwnerPin');
+  const errEl = document.getElementById('ownerPinError');
+
+  if (modal) modal.classList.add('hidden');
+  if (inputPin) {
+    inputPin.value = '';
+    inputPin.classList.remove('border-rose-500', 'bg-rose-50/50');
+  }
+  if (errEl) errEl.classList.add('hidden');
+  pendingOwnerPinAction = null;
+}
+
 function setupOwnerPinModal() {
   const btnNav = document.getElementById('btnNavMonitoringBank');
   const modal = document.getElementById('ownerPinModal');
@@ -1696,55 +1769,57 @@ function setupOwnerPinModal() {
   const btnClear = document.getElementById('btnPinClear');
   const btnBackspace = document.getElementById('btnPinBackspace');
 
-  if (!btnNav || !modal) return;
+  if (!modal) return;
 
-  function openPinModal() {
+  function handleVerifyPin(e) {
+    if (e) e.preventDefault();
+    const pin = (inputPin?.value || '').trim();
+    if (pin === OWNER_SECURITY_PIN) {
+      sessionStorage.setItem(OWNER_AUTH_SESSION_KEY, OWNER_SECURITY_PIN);
+      modal.classList.add('hidden');
+      const action = pendingOwnerPinAction;
+      pendingOwnerPinAction = null;
+      if (typeof action === 'function') {
+        action();
+      } else {
+        window.location.href = 'monitoring-bank.html';
+      }
+    } else {
+      if (errEl) {
+        errEl.classList.remove('hidden');
+        inputPin?.classList.add('border-rose-500', 'bg-rose-50/50');
+      }
+      if (inputPin) {
+        inputPin.value = '';
+        inputPin.focus();
+      }
+    }
+  }
+
+  btnNav?.addEventListener('click', () => {
     // If already verified in this session, navigate directly
     if (sessionStorage.getItem(OWNER_AUTH_SESSION_KEY) === OWNER_SECURITY_PIN) {
       window.location.href = 'monitoring-bank.html';
       return;
     }
-    inputPin.value = '';
-    if (errEl) errEl.classList.add('hidden');
-    inputPin.classList.remove('border-rose-500', 'bg-rose-50/50');
-    modal.classList.remove('hidden');
-    setTimeout(() => inputPin.focus(), 100);
-  }
+    openOwnerPinModal(
+      () => { window.location.href = 'monitoring-bank.html'; },
+      'Akses Khusus Owner',
+      'Rekening Mandiri & Restok',
+      'Halaman ini dilindungi. Masukkan PIN keamanan Owner untuk melanjutkan:'
+    );
+  });
 
-  function closePinModal() {
-    modal.classList.add('hidden');
-    inputPin.value = '';
-    if (errEl) errEl.classList.add('hidden');
-    inputPin.classList.remove('border-rose-500', 'bg-rose-50/50');
-  }
-
-  function handleVerifyPin(e) {
-    if (e) e.preventDefault();
-    const pin = (inputPin.value || '').trim();
-    if (pin === OWNER_SECURITY_PIN) {
-      sessionStorage.setItem(OWNER_AUTH_SESSION_KEY, OWNER_SECURITY_PIN);
-      modal.classList.add('hidden');
-      window.location.href = 'monitoring-bank.html';
-    } else {
-      if (errEl) {
-        errEl.classList.remove('hidden');
-        inputPin.classList.add('border-rose-500', 'bg-rose-50/50');
-      }
-      inputPin.value = '';
-      inputPin.focus();
-    }
-  }
-
-  btnNav.addEventListener('click', openPinModal);
-  btnClose?.addEventListener('click', closePinModal);
-  btnCancel?.addEventListener('click', closePinModal);
+  btnClose?.addEventListener('click', closeOwnerPinModal);
+  btnCancel?.addEventListener('click', closeOwnerPinModal);
 
   modal.addEventListener('click', (e) => {
-    if (e.target === modal) closePinModal();
+    if (e.target === modal) closeOwnerPinModal();
   });
 
   keyBtns.forEach(btn => {
     btn.addEventListener('click', () => {
+      if (!inputPin) return;
       if (errEl) errEl.classList.add('hidden');
       inputPin.classList.remove('border-rose-500', 'bg-rose-50/50');
       if (inputPin.value.length < 4) {
@@ -1757,6 +1832,7 @@ function setupOwnerPinModal() {
   });
 
   btnClear?.addEventListener('click', () => {
+    if (!inputPin) return;
     inputPin.value = '';
     if (errEl) errEl.classList.add('hidden');
     inputPin.classList.remove('border-rose-500', 'bg-rose-50/50');
@@ -1764,13 +1840,14 @@ function setupOwnerPinModal() {
   });
 
   btnBackspace?.addEventListener('click', () => {
+    if (!inputPin) return;
     inputPin.value = inputPin.value.slice(0, -1);
     if (errEl) errEl.classList.add('hidden');
     inputPin.classList.remove('border-rose-500', 'bg-rose-50/50');
     inputPin.focus();
   });
 
-  inputPin.addEventListener('input', () => {
+  inputPin?.addEventListener('input', () => {
     inputPin.value = inputPin.value.replace(/[^0-9]/g, '').slice(0, 4);
     if (errEl) errEl.classList.add('hidden');
     inputPin.classList.remove('border-rose-500', 'bg-rose-50/50');

@@ -723,7 +723,14 @@
               <th class="py-1.5 px-1.5 sm:px-2 text-right whitespace-nowrap">Trade In</th>
               <th class="py-1.5 px-1.5 sm:px-2 text-right whitespace-nowrap text-rose-700">Biaya Ops</th>
               <th class="py-1.5 px-1.5 sm:px-2 text-right whitespace-nowrap bg-emerald-100/70 font-black text-emerald-950">Sisa Kas</th>
-              <th class="py-1.5 px-1.5 sm:px-2 text-center whitespace-nowrap">Status</th>
+              <th class="py-1.5 px-1.5 sm:px-2 text-center whitespace-nowrap">
+                <div class="inline-flex items-center gap-1 justify-center">
+                  <span>Status</span>
+                  <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] bg-amber-400 text-blue-950 font-black shadow-xs tracking-tight" title="Khusus Otorisasi Owner (PIN 2209)">
+                    <i class="fa-solid fa-lock text-[8px]"></i> Owner
+                  </span>
+                </div>
+              </th>
               <th class="py-1.5 px-1 sm:px-1.5 text-center whitespace-nowrap">Aksi</th>
             </tr>
           </thead>
@@ -979,8 +986,8 @@
             <i class="fa-solid fa-user-shield"></i>
           </span>
           <div>
-            <h3 class="font-extrabold text-base tracking-tight">Akses Khusus Owner</h3>
-            <p class="text-[11px] text-amber-300 font-semibold">Rekening Mandiri & Restok</p>
+            <h3 id="ownerPinModalTitle" class="font-extrabold text-base tracking-tight">Akses Khusus Owner</h3>
+            <p id="ownerPinModalSubtitle" class="text-[11px] text-amber-300 font-semibold">Rekening Mandiri & Restok</p>
           </div>
         </div>
         <button type="button" id="btnCloseOwnerPinModal" class="text-slate-400 hover:text-white transition p-1.5 rounded-lg hover:bg-white/10">
@@ -994,7 +1001,7 @@
           <div class="w-12 h-12 mx-auto rounded-full bg-amber-50 text-amber-600 flex items-center justify-center text-xl mb-1 shadow-inner">
             <i class="fa-solid fa-lock"></i>
           </div>
-          <p class="text-xs text-slate-600 font-medium leading-relaxed">
+          <p id="ownerPinModalDesc" class="text-xs text-slate-600 font-medium leading-relaxed">
             Halaman ini dilindungi. Masukkan PIN keamanan Owner untuk melanjutkan:
           </p>
         </div>
