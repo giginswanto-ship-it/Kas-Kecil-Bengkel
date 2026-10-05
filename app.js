@@ -14,6 +14,40 @@ let dbInstance = null;
 let currentExpenses = [];
 
 let currentCalDate = new Date();
+let currentHistoryDateFilter = 'all'; // 'all', 'selected_date', 'this_month', 'today'
+let currentHistoryMonthFilter = 'all'; // 'all', or 'YYYY-MM'
+
+// Indonesian Date Constants & Utilities
+const dayNamesIndo = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+const dayNamesShortIndo = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+const monthNamesIndo = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+];
+
+function formatTanggalIndo(dateStr, includeDay = true) {
+  if (!dateStr) return '-';
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1;
+  const day = parseInt(parts[2], 10);
+  const d = new Date(year, month, day);
+  const dayName = dayNamesIndo[d.getDay()] || '';
+  const monthName = monthNamesIndo[month] || '';
+  if (includeDay) {
+    return `${dayName}, ${day} ${monthName} ${year}`;
+  }
+  return `${day} ${monthName} ${year}`;
+}
+
+function getDayNameIndo(dateStr) {
+  if (!dateStr) return '';
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return '';
+  const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+  return dayNamesIndo[d.getDay()] || '';
+}
 
 // Utility: Format Rupiah
 function formatRupiah(number) {
@@ -51,21 +85,22 @@ function setupNumberInput(inputEl) {
   });
 }
 
-// Initialize live date and clock
+// Initialize live date and clock in header
 function initLiveClock() {
   const dateEl = document.getElementById('liveClock');
   const now = new Date();
-  const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  const todayIso = `${yyyy}-${mm}-${dd}`;
+
   if (dateEl) {
-    dateEl.innerText = now.toLocaleDateString('id-ID', options);
+    dateEl.innerText = formatTanggalIndo(todayIso, true);
   }
 
   const inputTanggal = document.getElementById('inputTanggal');
   if (inputTanggal && !inputTanggal.value) {
-    const yyyy = now.getFullYear();
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const dd = String(now.getDate()).padStart(2, '0');
-    inputTanggal.value = `${yyyy}-${mm}-${dd}`;
+    inputTanggal.value = todayIso;
   }
 }
 
@@ -380,19 +415,172 @@ function setupDenominationCounter() {
   });
 }
 
-// Initialize clean database if empty
-function initSampleDataIfEmpty() {
-  // Clean initialization with no dummy data
+// -------------------------------------------------------------
+// PENANGGALAN TERINTEGRASI & KALENDER HARIAN KAS
+// -------------------------------------------------------------
+
+// Cari data rekap kas hari kemarin (H-1) atau transaksi terakhir sebelum tanggal ini
+function findYesterdayRecord(currentDateStr) {
+  if (!currentDateStr) return null;
+  const records = getSavedRecords();
+  if (records.length === 0) return null;
+
+  // 1. Cek tepat H-1 (1 hari kalender sebelumnya)
+  const [y, m, d] = currentDateStr.split('-').map(Number);
+  const cur = new Date(y, m - 1, d);
+  cur.setDate(cur.getDate() - 1);
+  const prevDateStr = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}-${String(cur.getDate()).padStart(2, '0')}`;
+
+  const exactPrev = records.find(r => r.tanggal === prevDateStr);
+  if (exactPrev) return exactPrev;
+
+  // 2. Jika tidak ada H-1 tepat, ambil rekap terakhir sebelum tanggal ini
+  const priorRecords = records
+    .filter(r => r.tanggal && r.tanggal < currentDateStr)
+    .sort((a, b) => b.tanggal.localeCompare(a.tanggal));
+
+  return priorRecords.length > 0 ? priorRecords[0] : null;
 }
 
-// -------------------------------------------------------------
-// KALENDER HARIAN KAS BENGKEL LOGIC
-// -------------------------------------------------------------
-const monthNamesIndo = [
-  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-];
+// Update teks info saldo kas kemarin di bawah input Modal Kasir
+function updateYesterdaySaldoInfo(dateStr) {
+  const infoEl = document.getElementById('infoSaldoKemarin');
+  if (!infoEl) return;
 
+  const prev = findYesterdayRecord(dateStr);
+  if (prev) {
+    infoEl.innerHTML = `<span class="text-blue-700 font-bold">Kemarin (${formatTanggalIndo(prev.tanggal, false)}):</span> Sisa Kas <strong class="text-emerald-700 font-black">${formatRupiah(prev.sisaUangKasKecil)}</strong>`;
+  } else {
+    infoEl.innerText = 'Modal awal laci / sisa kas shift sebelumnya';
+  }
+}
+
+// Tarik Sisa Kas Kemarin (H-1) langsung ke input Saldo Awal (Modal)
+function tarikSaldoKemarin() {
+  const currentDateStr = document.getElementById('inputTanggal')?.value;
+  const prev = findYesterdayRecord(currentDateStr);
+  if (!prev) {
+    alert(`Belum ada data catatan kas sebelum tanggal ${formatTanggalIndo(currentDateStr, false)}.`);
+    return;
+  }
+
+  const sisa = Number(prev.sisaUangKasKecil || 0);
+  const inputModal = document.getElementById('inputSaldoAwal');
+  if (inputModal) {
+    inputModal.value = sisa.toLocaleString('id-ID');
+    recalculateAll();
+  }
+
+  alert(`Saldo Awal berhasil disesuaikan dengan Sisa Kas ${formatTanggalIndo(prev.tanggal, false)} (${prev.kasir || 'Kasir'}): ${formatRupiah(sisa)}`);
+}
+
+// Siapkan formulir bersih untuk tanggal baru
+function prepareNewFormForDate(dateStr) {
+  const settings = getAppSettings();
+  setKasirValue(settings.defaultKasir || '');
+  document.getElementById('inputCatatan').value = '';
+  document.getElementById('inputPenjualanShopDrive').value = '0';
+  document.getElementById('inputPenjualanBimaMotor').value = '0';
+  document.getElementById('inputPemasukanLain').value = '0';
+  document.getElementById('inputKeteranganPemasukanLain').value = '';
+  document.getElementById('inputTransferMandiri').value = '0';
+  document.getElementById('inputCardEdc').value = '0';
+  document.getElementById('inputPenghematanTradeIn').value = '0';
+  document.getElementById('inputFisikRiil').value = '0';
+  currentExpenses = [];
+  renderExpenses();
+
+  // Otomatis tawarkan/isi sisa kas kemarin jika ada
+  const yesterday = findYesterdayRecord(dateStr);
+  if (yesterday && Number(yesterday.sisaUangKasKecil) > 0) {
+    document.getElementById('inputSaldoAwal').value = Number(yesterday.sisaUangKasKecil || 0).toLocaleString('id-ID');
+  } else {
+    document.getElementById('inputSaldoAwal').value = Number(settings.defaultModal || 0).toLocaleString('id-ID');
+  }
+
+  recalculateAll();
+}
+
+// Handler utama pemilihan tanggal (Integrasi 2-Arah Form <-> Kalender <-> Database)
+function handleDateSelection(dateStr, autoLoad = true) {
+  if (!dateStr) return;
+
+  const inputTanggal = document.getElementById('inputTanggal');
+  if (inputTanggal && inputTanggal.value !== dateStr) {
+    inputTanggal.value = dateStr;
+  }
+
+  // 1. Tampilkan nama hari dan tanggal Indonesia di bawah input
+  const labelIndo = document.getElementById('labelTanggalIndo');
+  if (labelIndo) {
+    labelIndo.innerText = formatTanggalIndo(dateStr, true);
+  }
+
+  // 2. Sinkronkan tampilan kalender ke bulan & tahun tanggal ini
+  const parts = dateStr.split('-');
+  if (parts.length === 3) {
+    currentCalDate = new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
+  }
+  renderCalendar();
+  updateCalendarSelectedInfo(dateStr);
+
+  // 3. Periksa keberadaan data di database
+  const records = getSavedRecords();
+  const existing = records.find(r => r.tanggal === dateStr);
+  const badgeStatus = document.getElementById('badgeTanggalStatus');
+
+  if (existing) {
+    if (badgeStatus) {
+      badgeStatus.className = 'text-[10px] px-2 py-0.5 rounded-full font-black bg-emerald-100 text-emerald-800 border border-emerald-300';
+      badgeStatus.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Rekap Tersimpan';
+    }
+    if (autoLoad) {
+      loadRecordToForm(existing.id, false);
+    }
+  } else {
+    if (badgeStatus) {
+      badgeStatus.className = 'text-[10px] px-2 py-0.5 rounded-full font-bold bg-blue-100 text-blue-800 border border-blue-200';
+      badgeStatus.innerHTML = '<i class="fa-solid fa-plus mr-1"></i> Form Baru';
+    }
+    if (autoLoad) {
+      prepareNewFormForDate(dateStr);
+    }
+  }
+
+  // 4. Update info kas kemarin untuk modal awal
+  updateYesterdaySaldoInfo(dateStr);
+
+  // 5. Update tabel riwayat jika sedang difilter per tanggal form
+  if (currentHistoryDateFilter === 'selected_date') {
+    renderHistoryTable();
+  }
+}
+
+// Navigasi cepat maju / mundur hari (H-1 / H+1)
+function shiftDate(days) {
+  const input = document.getElementById('inputTanggal');
+  const currentVal = input?.value || new Date().toISOString().split('T')[0];
+  const [y, m, d] = currentVal.split('-').map(Number);
+  const dateObj = new Date(y, m - 1, d);
+  dateObj.setDate(dateObj.getDate() + days);
+  const newY = dateObj.getFullYear();
+  const newM = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const newD = String(dateObj.getDate()).padStart(2, '0');
+  const newDateStr = `${newY}-${newM}-${newD}`;
+  handleDateSelection(newDateStr, true);
+}
+
+// Navigasi cepat ke Hari Ini
+function setTodayDate() {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  const todayStr = `${yyyy}-${mm}-${dd}`;
+  handleDateSelection(todayStr, true);
+}
+
+// Render tampilan Kalender Harian Kas
 function renderCalendar() {
   const grid = document.getElementById('calendarGrid');
   const monthYearEl = document.getElementById('calendarMonthYear');
@@ -424,7 +612,8 @@ function renderCalendar() {
     grid.appendChild(emptyCell);
   }
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
   for (let day = 1; day <= totalDays; day++) {
     const mm = String(month + 1).padStart(2, '0');
@@ -443,7 +632,7 @@ function renderCalendar() {
     let baseClass = 'py-2 px-1 rounded-xl transition flex flex-col items-center justify-center relative cursor-pointer font-medium ';
     
     if (isSelected) {
-      baseClass += 'bg-blue-600 text-white font-black shadow-md ';
+      baseClass += 'bg-blue-600 text-white font-black shadow-md ring-2 ring-blue-400 ';
     } else if (isToday) {
       baseClass += 'bg-blue-50 text-blue-900 border border-blue-300 font-bold hover:bg-blue-100 ';
     } else if (hasRecord) {
@@ -457,7 +646,10 @@ function renderCalendar() {
     let dotHtml = '';
     if (hasRecord) {
       const dotColor = isSelected ? 'bg-amber-300' : 'bg-emerald-500';
-      dotHtml = `<span class="w-1.5 h-1.5 rounded-full ${dotColor} mt-0.5" title="Ada catatan kas: ${formatRupiah(recData.totalPemasukan)}"></span>`;
+      cell.title = `${formatTanggalIndo(dateStr)}: Sisa Kas ${formatRupiah(recData.sisaUangKasKecil)} (${recData.kasir || 'Kasir'})`;
+      dotHtml = `<span class="w-1.5 h-1.5 rounded-full ${dotColor} mt-0.5"></span>`;
+    } else if (isToday) {
+      cell.title = `Hari Ini: ${formatTanggalIndo(dateStr)}`;
     }
 
     cell.innerHTML = `
@@ -466,7 +658,7 @@ function renderCalendar() {
     `;
 
     cell.addEventListener('click', () => {
-      selectDateFromCalendar(dateStr);
+      handleDateSelection(dateStr, true);
     });
 
     grid.appendChild(cell);
@@ -475,37 +667,7 @@ function renderCalendar() {
   updateCalendarSelectedInfo(selectedDateInput);
 }
 
-function selectDateFromCalendar(dateStr) {
-  const inputTanggal = document.getElementById('inputTanggal');
-  if (inputTanggal) {
-    inputTanggal.value = dateStr;
-  }
-
-  const records = getSavedRecords();
-  const existingRecord = records.find(r => r.tanggal === dateStr);
-
-  if (existingRecord) {
-    loadRecordToForm(existingRecord.id);
-  } else {
-    const settings = getAppSettings();
-    setKasirValue(settings.defaultKasir || '');
-    document.getElementById('inputCatatan').value = '';
-    document.getElementById('inputPenjualanShopDrive').value = '0';
-    document.getElementById('inputPenjualanBimaMotor').value = '0';
-    document.getElementById('inputPemasukanLain').value = '0';
-    document.getElementById('inputKeteranganPemasukanLain').value = '';
-    document.getElementById('inputTransferMandiri').value = '0';
-    document.getElementById('inputCardEdc').value = '0';
-    document.getElementById('inputPenghematanTradeIn').value = '0';
-    document.getElementById('inputFisikRiil').value = '0';
-    currentExpenses = [];
-    renderExpenses();
-    recalculateAll();
-  }
-
-  renderCalendar();
-}
-
+// Update teks informasi status tanggal di bawah kalender
 function updateCalendarSelectedInfo(dateStr) {
   const infoEl = document.getElementById('calendarSelectedInfo');
   if (!infoEl) return;
@@ -517,21 +679,20 @@ function updateCalendarSelectedInfo(dateStr) {
 
   const records = getSavedRecords();
   const rec = records.find(r => r.tanggal === dateStr);
-
-  const parts = dateStr.split('-');
-  const formattedDate = `${parts[2]} ${monthNamesIndo[Number(parts[1]) - 1]} ${parts[0]}`;
+  const formattedDate = formatTanggalIndo(dateStr, true);
 
   if (rec) {
     infoEl.innerHTML = `
-      <span class="text-emerald-700"><i class="fa-solid fa-circle-check"></i> ${formattedDate}: Sisa Kas ${formatRupiah(rec.sisaUangKasKecil)}</span>
+      <span class="text-emerald-700 font-bold"><i class="fa-solid fa-circle-check"></i> ${formattedDate}: Sisa Kas ${formatRupiah(rec.sisaUangKasKecil)} (${rec.kasir || '-'})</span>
     `;
   } else {
     infoEl.innerHTML = `
-      <span class="text-slate-500"><i class="fa-regular fa-calendar"></i> ${formattedDate} (Belum ada rekap)</span>
+      <span class="text-slate-500"><i class="fa-regular fa-calendar"></i> ${formattedDate} (Belum ada rekap kas)</span>
     `;
   }
 }
 
+// Pasang event listener kontrol kalender & navigasi penanggalan
 function setupCalendarControls() {
   document.getElementById('btnPrevMonth')?.addEventListener('click', () => {
     currentCalDate.setMonth(currentCalDate.getMonth() - 1);
@@ -544,20 +705,51 @@ function setupCalendarControls() {
   });
 
   document.getElementById('btnCalendarToday')?.addEventListener('click', () => {
-    currentCalDate = new Date();
-    const todayStr = currentCalDate.toISOString().split('T')[0];
-    selectDateFromCalendar(todayStr);
+    setTodayDate();
   });
 
+  // Tombol navigasi penanggalan terintegrasi di form
+  document.getElementById('btnPrevDay')?.addEventListener('click', () => shiftDate(-1));
+  document.getElementById('btnNextDay')?.addEventListener('click', () => shiftDate(1));
+  document.getElementById('btnSetToday')?.addEventListener('click', setTodayDate);
+  document.getElementById('btnTarikSaldoKemarin')?.addEventListener('click', tarikSaldoKemarin);
+
+  // Listener input datepicker browser
   document.getElementById('inputTanggal')?.addEventListener('change', (e) => {
-    const val = e.target.value;
-    if (val) {
-      const parts = val.split('-');
-      currentCalDate = new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
-      renderCalendar();
-      updateCalendarSelectedInfo(val);
-    }
+    handleDateSelection(e.target.value, true);
   });
+}
+
+// Inisialisasi data awal jika database masih kosong
+function initSampleDataIfEmpty() {
+  const records = getSavedRecords();
+  if (records.length === 0) {
+    // Inisialisasi data awal tanggal 25 September 2026 (sesuai input aktif bengkel)
+    const initialRecord = {
+      id: "REC-20260925-01",
+      tanggal: "2026-09-25",
+      kasir: "Satria jaka Surya",
+      catatan: "Tutup shift kasir Shop & Drive & Bima Motor",
+      saldoAwal: 0,
+      penjualanShopDrive: 5089040,
+      penjualanBimaMotor: 0,
+      pemasukanLain: 0,
+      keteranganPemasukanLain: "",
+      totalPemasukan: 5089040,
+      transferMandiri: 772000,
+      cardEdc: 3761030,
+      penghematanTradeIn: 493000,
+      biayaOperasional: 0,
+      totalPengeluaranKas: 5026030,
+      sisaUangKasKecil: 63010,
+      fisikRiil: 63010,
+      selisih: 0,
+      sudahDiambil: false,
+      expenses: [],
+      createdAt: "2026-09-25T18:00:00.000Z"
+    };
+    saveRecordsToStorage([initialRecord]);
+  }
 }
 
 // -------------------------------------------------------------
@@ -904,23 +1096,107 @@ function downloadSpecificRecordPdf(id) {
   }
 }
 
-// Render History Table
+// Dropdown Pemilih Bulan pada Filter Riwayat
+function updateHistoryMonthDropdown(records) {
+  const select = document.getElementById('filterHistoryMonth');
+  if (!select) return;
+
+  const currentVal = select.value;
+  const monthSet = new Set();
+
+  records.forEach(r => {
+    if (r.tanggal && r.tanggal.length >= 7) {
+      monthSet.add(r.tanggal.slice(0, 7));
+    }
+  });
+
+  // Tambahkan bulan aktif kalender & bulan hari ini
+  const now = new Date();
+  monthSet.add(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
+  if (currentCalDate) {
+    monthSet.add(`${currentCalDate.getFullYear()}-${String(currentCalDate.getMonth() + 1).padStart(2, '0')}`);
+  }
+
+  const sortedMonths = Array.from(monthSet).sort().reverse();
+
+  let html = '<option value="all">Semua Bulan</option>';
+  sortedMonths.forEach(ym => {
+    const [y, m] = ym.split('-').map(Number);
+    const label = `${monthNamesIndo[m - 1]} ${y}`;
+    html += `<option value="${ym}">${label}</option>`;
+  });
+
+  select.innerHTML = html;
+  if (sortedMonths.includes(currentVal) || currentVal === 'all') {
+    select.value = currentVal;
+  }
+}
+
+// Pasang kontrol filter penanggalan pada riwayat kas
+function setupHistoryDateFilters() {
+  const filterBtns = document.querySelectorAll('.btn-history-date-filter');
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => {
+        b.className = 'btn-history-date-filter px-2.5 py-1 rounded-lg font-bold bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 transition';
+      });
+      btn.className = 'btn-history-date-filter px-2.5 py-1 rounded-lg font-bold bg-blue-600 text-white shadow-xs transition';
+
+      currentHistoryDateFilter = btn.dataset.filter || 'all';
+      renderHistoryTable();
+    });
+  });
+
+  document.getElementById('filterHistoryMonth')?.addEventListener('change', (e) => {
+    currentHistoryMonthFilter = e.target.value;
+    renderHistoryTable();
+  });
+}
+
+// Render History Table dengan Integrasi Penanggalan
 function renderHistoryTable() {
   const records = getSavedRecords();
   const tbody = document.getElementById('historyTableBody');
   const tfoot = document.getElementById('historyTableFoot');
   const emptyNotice = document.getElementById('emptyHistoryNotice');
   const filterQuery = (document.getElementById('filterSearch')?.value || '').toLowerCase();
+  const selectedDate = document.getElementById('inputTanggal')?.value;
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const thisMonthStr = `${currentCalDate.getFullYear()}-${String(currentCalDate.getMonth() + 1).padStart(2, '0')}`;
 
   if (!tbody) return;
 
+  // Update dropdown pilihan bulan
+  updateHistoryMonthDropdown(records);
+
   const filtered = records.filter(rec => {
-    if (!filterQuery) return true;
-    return (
-      (rec.tanggal || '').toLowerCase().includes(filterQuery) ||
-      (rec.kasir || '').toLowerCase().includes(filterQuery) ||
-      (rec.catatan || '').toLowerCase().includes(filterQuery)
-    );
+    // 1. Filter Penanggalan Cepat
+    if (currentHistoryDateFilter === 'selected_date') {
+      if (rec.tanggal !== selectedDate) return false;
+    } else if (currentHistoryDateFilter === 'this_month') {
+      if (!rec.tanggal || !rec.tanggal.startsWith(thisMonthStr)) return false;
+    } else if (currentHistoryDateFilter === 'today') {
+      if (rec.tanggal !== todayStr) return false;
+    }
+
+    // 2. Filter Dropdown Bulan
+    if (currentHistoryMonthFilter && currentHistoryMonthFilter !== 'all') {
+      if (!rec.tanggal || !rec.tanggal.startsWith(currentHistoryMonthFilter)) return false;
+    }
+
+    // 3. Filter Pencarian Teks
+    if (filterQuery) {
+      const match = (
+        (rec.tanggal || '').toLowerCase().includes(filterQuery) ||
+        (formatTanggalIndo(rec.tanggal, true) || '').toLowerCase().includes(filterQuery) ||
+        (rec.kasir || '').toLowerCase().includes(filterQuery) ||
+        (rec.catatan || '').toLowerCase().includes(filterQuery)
+      );
+      if (!match) return false;
+    }
+
+    return true;
   });
 
   tbody.innerHTML = '';
@@ -974,7 +1250,12 @@ function renderHistoryTable() {
     `;
 
     tr.innerHTML = `
-      <td class="py-1.5 px-1.5 sm:px-2 font-bold text-slate-800 whitespace-nowrap text-[10.5px]">${rec.tanggal}</td>
+      <td class="py-1.5 px-1.5 sm:px-2 whitespace-nowrap text-[10.5px]">
+        <div class="flex flex-col">
+          <span class="font-bold text-blue-950">${formatTanggalIndo(rec.tanggal, false)}</span>
+          <span class="text-[9.5px] text-blue-600 font-semibold">${getDayNameIndo(rec.tanggal)}</span>
+        </div>
+      </td>
       <td class="py-1.5 px-1.5 sm:px-2 whitespace-nowrap text-slate-600 text-[10.5px]">${rec.kasir || '-'}</td>
       <td class="py-1.5 px-1.5 sm:px-2 text-right font-semibold text-amber-700 whitespace-nowrap text-[10.5px]">${formatRupiah(rec.penjualanShopDrive)}</td>
       <td class="py-1.5 px-1.5 sm:px-2 text-right font-semibold text-indigo-700 whitespace-nowrap text-[10.5px]">${formatRupiah(rec.penjualanBimaMotor)}</td>
@@ -1086,7 +1367,7 @@ function saveCurrentRecord() {
   }
 
   const record = {
-    id: 'REC-' + Date.now(),
+    id: 'REC-' + tanggal.replace(/-/g, '') + '-' + Date.now().toString().slice(-4),
     tanggal,
     kasir,
     catatan,
@@ -1110,21 +1391,42 @@ function saveCurrentRecord() {
 
   const records = getSavedRecords();
   
-  const existingIdx = records.findIndex(r => r.tanggal === tanggal);
+  const existingIdx = records.findIndex(r => r.tanggal === tanggal && (r.kasir || '') === kasir);
   if (existingIdx !== -1) {
     record.id = records[existingIdx].id || record.id;
     record.sudahDiambil = records[existingIdx].sudahDiambil || false;
     records[existingIdx] = record;
   } else {
-    record.sudahDiambil = false;
-    records.unshift(record);
+    const sameDateIdx = records.findIndex(r => r.tanggal === tanggal);
+    if (sameDateIdx !== -1 && records[sameDateIdx].kasir === kasir) {
+      record.id = records[sameDateIdx].id || record.id;
+      record.sudahDiambil = records[sameDateIdx].sudahDiambil || false;
+      records[sameDateIdx] = record;
+    } else {
+      record.sudahDiambil = false;
+      records.unshift(record);
+    }
   }
 
+  // Urutkan berdasarkan tanggal terbaru ke terlama
+  records.sort((a, b) => (b.tanggal || '').localeCompare(a.tanggal || ''));
+
   saveRecordsToStorage(records);
+
+  // Sync dengan backend server lokal jika berjalan
+  try {
+    fetch('http://localhost:3000/api/records', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(record)
+    }).catch(() => {});
+  } catch (e) {}
+
+  handleDateSelection(tanggal, false);
   renderHistoryTable();
   renderCalendar();
 
-  alert(`Data Kas tanggal ${tanggal} (${kasir}) berhasil tersimpan ke database sistem!`);
+  alert(`Data Kas ${formatTanggalIndo(tanggal, true)} (${kasir}) berhasil tersimpan ke sistem & kalender kas!`);
 }
 
 // Toggle Checklist Status Pengambilan Kas
@@ -1171,7 +1473,7 @@ function setKasirValue(val) {
 }
 
 // Load a record back to form
-function loadRecordToForm(id) {
+function loadRecordToForm(id, scroll = true) {
   const records = getSavedRecords();
   const record = records.find(r => r.id === id);
   if (!record) return;
@@ -1196,13 +1498,30 @@ function loadRecordToForm(id) {
   renderExpenses();
   recalculateAll();
 
+  // Sinkronisasi komponen penanggalan
   if (record.tanggal) {
+    const labelIndo = document.getElementById('labelTanggalIndo');
+    if (labelIndo) labelIndo.innerText = formatTanggalIndo(record.tanggal, true);
+
+    const badgeStatus = document.getElementById('badgeTanggalStatus');
+    if (badgeStatus) {
+      badgeStatus.className = 'text-[10px] px-2 py-0.5 rounded-full font-black bg-emerald-100 text-emerald-800 border border-emerald-300';
+      badgeStatus.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Rekap Tersimpan';
+    }
+
+    updateYesterdaySaldoInfo(record.tanggal);
+
     const parts = record.tanggal.split('-');
-    currentCalDate = new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
-    renderCalendar();
+    if (parts.length === 3) {
+      currentCalDate = new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
+      renderCalendar();
+      updateCalendarSelectedInfo(record.tanggal);
+    }
   }
 
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (scroll !== false) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 }
 
 // Delete record from Database
@@ -1517,6 +1836,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Setup Modules
   setupCalendarControls();
+  setupHistoryDateFilters();
   setupDenominationCounter();
   setupDatabaseModal();
   setupOwnerPinModal();
@@ -1535,9 +1855,27 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initialize sample data in storage if empty
   initSampleDataIfEmpty();
 
-  // Initial render
-  renderExpenses();
-  recalculateAll();
+  // Background check for server records if server is running
+  try {
+    const res = await fetch('http://localhost:3000/api/records');
+    if (res.ok) {
+      const serverRecords = await res.json();
+      if (Array.isArray(serverRecords) && serverRecords.length > 0) {
+        const localRecords = getSavedRecords();
+        if (localRecords.length === 0) {
+          saveRecordsToStorage(serverRecords);
+        }
+      }
+    }
+  } catch (err) {}
+
+  // Determine initial date: prioritize 2026-09-25 if exists or today
+  const existingRecords = getSavedRecords();
+  const has25Sep = existingRecords.some(r => r.tanggal === '2026-09-25');
+  const now = new Date();
+  const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const initialDate = has25Sep ? '2026-09-25' : (document.getElementById('inputTanggal')?.value || todayIso);
+
+  handleDateSelection(initialDate, true);
   renderHistoryTable();
-  renderCalendar();
 });

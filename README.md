@@ -16,7 +16,11 @@ Aplikasi Web modern & responsif untuk sistem pencatatan, kalkulasi otomatis, dan
 ## ✨ Fitur-Fitur Utama
 
 - **Sistem Database Terintegrasi**: Menggunakan engine database **IndexedDB** & **LocalStorage** dengan dukungan backup/restore file JSON dan SQL Dump.
-- **Kalender Harian Interaktif**: Memilih dan melihat status rekapitulasi kas harian per tanggal secara visual (titik hijau penanda tanggal yang telah memiliki data rekap).
+- **Penanggalan Terintegrasi Penuh (2-Arah)**: Sinkronisasi otomatis dan mulus antara form input, kalender harian kas, database, dan tabel riwayat. Memilih tanggal langsung memuat data kas tersimpan atau menyiapkan form baru.
+- **Navigasi Cepat Tanggal & Format Indonesia**: Tombol navigasi `◀ Kemarin (H-1)`, `Hari Ini`, dan `Besok (H+1) ▶` langsung di form input, disertai label otomatis format hari & tanggal bahasa Indonesia (*contoh: "Jumat, 25 September 2026"*).
+- **Estafet Saldo Kas (Tarik Kas H-1 ke Saldo Awal)**: Tombol cerdas `Tarik Kas H-1` yang mendeteksi sisa kas fisik dari penutupan shift kemarin untuk dijadikan modal awal hari ini.
+- **Kalender Harian Interaktif**: Memilih dan melihat status rekapitulasi kas harian per tanggal secara visual (titik hijau penanda tanggal yang telah memiliki data rekap kas dan tooltip detail).
+- **Filter Penanggalan Riwayat Kas**: Filter komprehensif pada tabel riwayat untuk menampilkan data berdasarkan *Semua Data*, *Tanggal Aktif Form*, *Bulan Ini*, *Hari Ini*, maupun *Pilih Bulan Spesifik*.
 - **Pemisahan Sumber Pemasukan**: Mencatat omset terpisah antara Shop & Drive, Bima Motor, serta Sumber Pemasukan Lain (jasa derek, scrap aki bekas, titipan, dll).
 - **Auto-Kalkulasi Realtime**: Perhitungan langsung berjalan seketika saat kasir mengetik nominal.
 - **Rincian Pengeluaran Operasional Dinamis**: Kasir dapat menambah/menghapus baris bon pengeluaran kas kecil (bensin, makan siang, sparepart darurat, dll).

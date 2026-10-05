@@ -1,5 +1,29 @@
 {
   "appName": "Monitor Kas Kecil Bengkel",
   "version": "1.0.0",
-  "records": []
+  "records": [
+    {
+      "id": "REC-20260925-01",
+      "tanggal": "2026-09-25",
+      "kasir": "Satria jaka Surya",
+      "catatan": "Tutup shift kasir Shop & Drive & Bima Motor",
+      "saldoAwal": 0,
+      "penjualanShopDrive": 5089040,
+      "penjualanBimaMotor": 0,
+      "pemasukanLain": 0,
+      "keteranganPemasukanLain": "",
+      "totalPemasukan": 5089040,
+      "transferMandiri": 772000,
+      "cardEdc": 3761030,
+      "penghematanTradeIn": 493000,
+      "biayaOperasional": 0,
+      "totalPengeluaranKas": 5026030,
+      "sisaUangKasKecil": 63010,
+      "fisikRiil": 63010,
+      "selisih": 0,
+      "sudahDiambil": false,
+      "expenses": [],
+      "createdAt": "2026-09-25T18:00:00.000Z"
+    }
+  ]
 }
