@@ -57,33 +57,58 @@ function loadCsvRecords(filePath = DEFAULT_CSV_PATH) {
   try {
     const raw = fs.readFileSync(filePath, 'utf8');
     const lines = raw.split(/\r?\n/).filter(line => line.trim().length > 0);
-    if (lines.length <= 1) return [];
-
     const headers = lines[0].split(';').map(h => h.trim());
     const records = [];
+    const hasPemasukanLain = headers.some(h => (h || '').toLowerCase().includes('pemasukan lain'));
 
     for (let i = 1; i < lines.length; i++) {
       const cols = lines[i].split(';').map(c => c.trim());
       if (cols.length < 2 || !cols[0]) continue;
 
-      records.push({
-        tanggal: cols[0] || '',
-        kasir: cols[1] || '-',
-        saldoAwal: Number(cols[2]) || 0,
-        penjualanShopDrive: Number(cols[3]) || 0,
-        penjualanBimaMotor: Number(cols[4]) || 0,
-        totalPemasukan: Number(cols[5]) || 0,
-        transferMandiri: Number(cols[6]) || 0,
-        cardEdc: Number(cols[7]) || 0,
-        penghematanTradeIn: Number(cols[8]) || 0,
-        biayaOperasional: Number(cols[9]) || 0,
-        totalPengeluaranKas: Number(cols[10]) || 0,
-        sisaUangKasKecil: Number(cols[11]) || 0,
-        fisikRiil: Number(cols[12]) || 0,
-        selisih: Number(cols[13]) || 0,
-        catatan: cols[14] || '',
-        expenses: []
-      });
+      if (hasPemasukanLain) {
+        records.push({
+          tanggal: cols[0] || '',
+          kasir: cols[1] || '-',
+          saldoAwal: Number(cols[2]) || 0,
+          penjualanShopDrive: Number(cols[3]) || 0,
+          penjualanBimaMotor: Number(cols[4]) || 0,
+          pemasukanLain: Number(cols[5]) || 0,
+          keteranganPemasukanLain: cols[6] || '',
+          totalPemasukan: Number(cols[7]) || 0,
+          transferMandiri: Number(cols[8]) || 0,
+          cardEdc: Number(cols[9]) || 0,
+          penghematanTradeIn: Number(cols[10]) || 0,
+          biayaOperasional: Number(cols[11]) || 0,
+          totalPengeluaranKas: Number(cols[12]) || 0,
+          sisaUangKasKecil: Number(cols[13]) || 0,
+          fisikRiil: Number(cols[14]) || 0,
+          selisih: Number(cols[15]) || 0,
+          sudahDiambil: (cols[16] || '').toLowerCase().includes('sudah'),
+          catatan: cols[17] || '',
+          expenses: []
+        });
+      } else {
+        records.push({
+          tanggal: cols[0] || '',
+          kasir: cols[1] || '-',
+          saldoAwal: Number(cols[2]) || 0,
+          penjualanShopDrive: Number(cols[3]) || 0,
+          penjualanBimaMotor: Number(cols[4]) || 0,
+          pemasukanLain: 0,
+          keteranganPemasukanLain: '',
+          totalPemasukan: Number(cols[5]) || 0,
+          transferMandiri: Number(cols[6]) || 0,
+          cardEdc: Number(cols[7]) || 0,
+          penghematanTradeIn: Number(cols[8]) || 0,
+          biayaOperasional: Number(cols[9]) || 0,
+          totalPengeluaranKas: Number(cols[10]) || 0,
+          sisaUangKasKecil: Number(cols[11]) || 0,
+          fisikRiil: Number(cols[12]) || 0,
+          selisih: Number(cols[13]) || 0,
+          catatan: cols[14] || '',
+          expenses: []
+        });
+      }
     }
     return records;
   } catch (err) {
@@ -187,6 +212,9 @@ function displayRecordDetail(record) {
   console.log(`    - Saldo Awal Modal Kas : ${formatRupiah(record.saldoAwal)}`);
   console.log(`    - Penjualan Shop & Drive: ${formatRupiah(record.penjualanShopDrive)}`);
   console.log(`    - Penjualan Bima Motor  : ${formatRupiah(record.penjualanBimaMotor)}`);
+  if (record.pemasukanLain) {
+    console.log(`    - Pemasukan Lain-lain   : ${formatRupiah(record.pemasukanLain)}${record.keteranganPemasukanLain ? ' (' + record.keteranganPemasukanLain + ')' : ''}`);
+  }
   console.log(`    ─────────────────────────────────────────────────`);
   console.log(`    👉 TOTAL PEMASUKAN      : ${formatRupiah(record.totalPemasukan)}`);
   console.log(`    👉 TOTAL KAS TERSEDIA   : ${formatRupiah(Number(record.saldoAwal || 0) + Number(record.totalPemasukan || 0))}`);
@@ -241,6 +269,7 @@ function displaySummaryStats(records) {
   let totalSaldoAwal = 0;
   let totalSD = 0;
   let totalBima = 0;
+  let totalLain = 0;
   let totalMasuk = 0;
   let totalMandiri = 0;
   let totalCard = 0;
@@ -258,6 +287,7 @@ function displaySummaryStats(records) {
     totalSaldoAwal += Number(r.saldoAwal || 0);
     totalSD += Number(r.penjualanShopDrive || 0);
     totalBima += Number(r.penjualanBimaMotor || 0);
+    totalLain += Number(r.pemasukanLain || 0);
     totalMasuk += Number(r.totalPemasukan || 0);
     totalMandiri += Number(r.transferMandiri || 0);
     totalCard += Number(r.cardEdc || 0);
@@ -277,13 +307,17 @@ function displaySummaryStats(records) {
   const avgHarian = records.length > 0 ? Math.round(totalMasuk / records.length) : 0;
   const persenSD = totalMasuk > 0 ? ((totalSD / totalMasuk) * 100).toFixed(1) : 0;
   const persenBima = totalMasuk > 0 ? ((totalBima / totalMasuk) * 100).toFixed(1) : 0;
+  const persenLain = totalMasuk > 0 ? ((totalLain / totalMasuk) * 100).toFixed(1) : 0;
 
   console.log(`  📌 Total Hari / Catatan       : ${records.length} Hari`);
   console.log(`  📌 Rata-rata Omset Harian     : ${formatRupiah(avgHarian)} / hari\n`);
 
-  console.log('  💰 TOTAL OMSET PENJUALAN:');
+  console.log('  💰 TOTAL OMSET PENJUALAN & PEMASUKAN:');
   console.log(`    - Shop & Drive              : ${formatRupiah(totalSD)} (${persenSD}%)`);
   console.log(`    - Bima Motor                : ${formatRupiah(totalBima)} (${persenBima}%)`);
+  if (totalLain > 0) {
+    console.log(`    - Pemasukan Lain-lain       : ${formatRupiah(totalLain)} (${persenLain}%)`);
+  }
   console.log(`    ───────────────────────────────────────────────────────`);
   console.log(`    👉 TOTAL PEMASUKAN KOTOR    : ${formatRupiah(totalMasuk)}`);
   printLine('-');

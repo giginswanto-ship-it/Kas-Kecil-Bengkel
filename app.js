@@ -237,10 +237,12 @@ function addExpenseItem() {
 function recalculateAll() {
   const saldoAwal = parseNumber(document.getElementById('inputSaldoAwal')?.value || 0);
 
-  // 1. PEMASUKAN = Penjualan Shop & Drive + Penjualan Bima Motor
+  // 1. PEMASUKAN = Penjualan Shop & Drive + Penjualan Bima Motor + Sumber Pemasukan Lain
   const penjualanShopDrive = parseNumber(document.getElementById('inputPenjualanShopDrive')?.value || 0);
   const penjualanBimaMotor = parseNumber(document.getElementById('inputPenjualanBimaMotor')?.value || 0);
-  const totalPemasukan = penjualanShopDrive + penjualanBimaMotor;
+  const pemasukanLain = parseNumber(document.getElementById('inputPemasukanLain')?.value || 0);
+  const keteranganPemasukanLain = document.getElementById('inputKeteranganPemasukanLain')?.value || '';
+  const totalPemasukan = penjualanShopDrive + penjualanBimaMotor + pemasukanLain;
 
   // 2. PENGELUARAN KAS = Transfer Bank Mandiri + Card/EDC + Penghematan/Trade In + Pengeluaran Biaya Operasional
   const transferMandiri = parseNumber(document.getElementById('inputTransferMandiri')?.value || 0);
@@ -277,6 +279,8 @@ function recalculateAll() {
   document.getElementById('calcTotalPemasukan').innerText = formatRupiah(totalPemasukan);
   document.getElementById('calcShopDrive').innerText = formatRupiah(penjualanShopDrive);
   document.getElementById('calcBimaMotor').innerText = formatRupiah(penjualanBimaMotor);
+  const calcPemasukanLainEl = document.getElementById('calcPemasukanLain');
+  if (calcPemasukanLainEl) calcPemasukanLainEl.innerText = formatRupiah(pemasukanLain);
 
   document.getElementById('calcTotalPengeluaran').innerText = `(${formatRupiah(totalPengeluaranKas)})`;
   document.getElementById('calcMinusMandiri').innerText = `(${formatRupiah(transferMandiri)})`;
@@ -312,6 +316,8 @@ function recalculateAll() {
     saldoAwal,
     penjualanShopDrive,
     penjualanBimaMotor,
+    pemasukanLain,
+    keteranganPemasukanLain,
     totalPemasukan,
     transferMandiri,
     cardEdc,
@@ -481,10 +487,13 @@ function selectDateFromCalendar(dateStr) {
   if (existingRecord) {
     loadRecordToForm(existingRecord.id);
   } else {
-    document.getElementById('inputKasir').value = '';
+    const settings = getAppSettings();
+    setKasirValue(settings.defaultKasir || '');
     document.getElementById('inputCatatan').value = '';
     document.getElementById('inputPenjualanShopDrive').value = '0';
     document.getElementById('inputPenjualanBimaMotor').value = '0';
+    document.getElementById('inputPemasukanLain').value = '0';
+    document.getElementById('inputKeteranganPemasukanLain').value = '';
     document.getElementById('inputTransferMandiri').value = '0';
     document.getElementById('inputCardEdc').value = '0';
     document.getElementById('inputPenghematanTradeIn').value = '0';
@@ -627,7 +636,26 @@ function setupDatabaseModal() {
     const inputModal = document.getElementById('settingDefaultModal');
     const inputBengkel = document.getElementById('settingBengkelName');
 
-    if (inputKasir) inputKasir.value = settings.defaultKasir || '';
+    if (inputKasir) {
+      const val = settings.defaultKasir || '';
+      let found = false;
+      for (let i = 0; i < inputKasir.options.length; i++) {
+        if (inputKasir.options[i].value.toLowerCase() === val.toLowerCase()) {
+          inputKasir.selectedIndex = i;
+          found = true;
+          break;
+        }
+      }
+      if (!found && val) {
+        const opt = document.createElement('option');
+        opt.value = val;
+        opt.textContent = val;
+        inputKasir.appendChild(opt);
+        inputKasir.value = val;
+      } else if (!found) {
+        inputKasir.value = '';
+      }
+    }
     if (inputModal) inputModal.value = Number(settings.defaultModal || 0).toLocaleString('id-ID');
     if (inputBengkel) inputBengkel.value = settings.bengkelName || '';
   }
@@ -696,6 +724,8 @@ function setupDatabaseModal() {
     sql += `  saldo_awal BIGINT,\n`;
     sql += `  penjualan_shop_drive BIGINT,\n`;
     sql += `  penjualan_bima_motor BIGINT,\n`;
+    sql += `  pemasukan_lain BIGINT,\n`;
+    sql += `  keterangan_pemasukan_lain TEXT,\n`;
     sql += `  total_pemasukan BIGINT,\n`;
     sql += `  transfer_mandiri BIGINT,\n`;
     sql += `  card_edc BIGINT,\n`;
@@ -712,7 +742,8 @@ function setupDatabaseModal() {
     records.forEach(r => {
       const catEscaped = (r.catatan || '').replace(/'/g, "''");
       const kasirEscaped = (r.kasir || '').replace(/'/g, "''");
-      sql += `INSERT INTO tbl_rekap_kas VALUES ('${r.id}', '${r.tanggal}', '${kasirEscaped}', ${r.saldoAwal || 0}, ${r.penjualanShopDrive || 0}, ${r.penjualanBimaMotor || 0}, ${r.totalPemasukan || 0}, ${r.transferMandiri || 0}, ${r.cardEdc || 0}, ${r.penghematanTradeIn || 0}, ${r.biayaOperasional || 0}, ${r.totalPengeluaranKas || 0}, ${r.sisaUangKasKecil || 0}, ${r.fisikRiil || 0}, ${r.selisih || 0}, '${catEscaped}', '${r.createdAt || new Date().toISOString()}');\n`;
+      const ketLainEscaped = (r.keteranganPemasukanLain || '').replace(/'/g, "''");
+      sql += `INSERT INTO tbl_rekap_kas VALUES ('${r.id}', '${r.tanggal}', '${kasirEscaped}', ${r.saldoAwal || 0}, ${r.penjualanShopDrive || 0}, ${r.penjualanBimaMotor || 0}, ${r.pemasukanLain || 0}, '${ketLainEscaped}', ${r.totalPemasukan || 0}, ${r.transferMandiri || 0}, ${r.cardEdc || 0}, ${r.penghematanTradeIn || 0}, ${r.biayaOperasional || 0}, ${r.totalPengeluaranKas || 0}, ${r.sisaUangKasKecil || 0}, ${r.fisikRiil || 0}, ${r.selisih || 0}, '${catEscaped}', '${r.createdAt || new Date().toISOString()}');\n`;
     });
 
     const blob = new Blob([sql], { type: 'text/sql' });
@@ -779,6 +810,10 @@ function populatePrintContainer(data) {
   document.getElementById('printSaldoAwal').innerText = formatRupiah(calc.saldoAwal);
   document.getElementById('printShopDrive').innerText = formatRupiah(calc.penjualanShopDrive);
   document.getElementById('printBimaMotor').innerText = formatRupiah(calc.penjualanBimaMotor);
+  const printPemasukanLainEl = document.getElementById('printPemasukanLain');
+  if (printPemasukanLainEl) printPemasukanLainEl.innerText = formatRupiah(calc.pemasukanLain || 0);
+  const printKetPemasukanLainEl = document.getElementById('printKetPemasukanLain');
+  if (printKetPemasukanLainEl) printKetPemasukanLainEl.innerText = calc.keteranganPemasukanLain ? `(${calc.keteranganPemasukanLain})` : '';
   document.getElementById('printTotalPemasukan').innerText = formatRupiah(calc.totalPemasukan);
 
   document.getElementById('printTransferMandiri').innerText = `(${formatRupiah(calc.transferMandiri)})`;
@@ -901,6 +936,7 @@ function renderHistoryTable() {
   // Calculate Column Sums (Jumlah ke bawah)
   const sumShopDrive = filtered.reduce((sum, r) => sum + (Number(r.penjualanShopDrive) || 0), 0);
   const sumBimaMotor = filtered.reduce((sum, r) => sum + (Number(r.penjualanBimaMotor) || 0), 0);
+  const sumPemasukanLain = filtered.reduce((sum, r) => sum + (Number(r.pemasukanLain) || 0), 0);
   const sumPemasukan = filtered.reduce((sum, r) => sum + (Number(r.totalPemasukan) || 0), 0);
   const sumMandiri = filtered.reduce((sum, r) => sum + (Number(r.transferMandiri) || 0), 0);
   const sumEdc = filtered.reduce((sum, r) => sum + (Number(r.cardEdc) || 0), 0);
@@ -925,43 +961,44 @@ function renderHistoryTable() {
 
     const checklistStatus = `
       <div class="flex flex-col items-center justify-center gap-0.5">
-        <label class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-bold cursor-pointer transition select-none ${
+        <label class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[9px] font-bold cursor-pointer transition select-none ${
           isTaken 
             ? 'bg-emerald-50 border-emerald-300 text-emerald-800 hover:bg-emerald-100' 
             : 'bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100'
         }" title="Klik untuk menandai Sudah / Belum Diambil">
-          <input type="checkbox" class="chk-status-diambil w-3.5 h-3.5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer" data-id="${rec.id}" ${isTaken ? 'checked' : ''}>
-          <span>${isTaken ? '<i class="fa-solid fa-check text-emerald-600"></i> Sudah Diambil' : '<i class="fa-regular fa-clock text-amber-600"></i> Belum Diambil'}</span>
+          <input type="checkbox" class="chk-status-diambil w-3 h-3 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer" data-id="${rec.id}" ${isTaken ? 'checked' : ''}>
+          <span>${isTaken ? 'Diambil' : 'Belum'}</span>
         </label>
         <div>${statusBadge}</div>
       </div>
     `;
 
     tr.innerHTML = `
-      <td class="py-2 px-2.5 font-bold text-slate-800 whitespace-nowrap">${rec.tanggal}</td>
-      <td class="py-2 px-2.5 whitespace-nowrap text-slate-600">${rec.kasir || '-'}</td>
-      <td class="py-2 px-2.5 text-right font-semibold text-amber-700 whitespace-nowrap">${formatRupiah(rec.penjualanShopDrive)}</td>
-      <td class="py-2 px-2.5 text-right font-semibold text-indigo-700 whitespace-nowrap">${formatRupiah(rec.penjualanBimaMotor)}</td>
-      <td class="py-2 px-2.5 text-right font-black text-blue-900 bg-blue-50/40 whitespace-nowrap">${formatRupiah(rec.totalPemasukan)}</td>
-      <td class="py-2 px-2.5 text-right text-slate-600 whitespace-nowrap">${formatRupiah(rec.transferMandiri)}</td>
-      <td class="py-2 px-2.5 text-right text-slate-600 whitespace-nowrap">${formatRupiah(rec.cardEdc)}</td>
-      <td class="py-2 px-2.5 text-right text-slate-600 whitespace-nowrap">${formatRupiah(rec.penghematanTradeIn)}</td>
-      <td class="py-2 px-2.5 text-right font-semibold text-rose-600 whitespace-nowrap">${formatRupiah(rec.biayaOperasional)}</td>
-      <td class="py-2 px-2.5 text-right font-black text-emerald-950 bg-emerald-50 whitespace-nowrap">${formatRupiah(rec.sisaUangKasKecil)}</td>
-      <td class="py-2 px-2.5 text-center whitespace-nowrap">${checklistStatus}</td>
-      <td class="py-2 px-2.5 text-center whitespace-nowrap">
+      <td class="py-1.5 px-1.5 sm:px-2 font-bold text-slate-800 whitespace-nowrap text-[10.5px]">${rec.tanggal}</td>
+      <td class="py-1.5 px-1.5 sm:px-2 whitespace-nowrap text-slate-600 text-[10.5px]">${rec.kasir || '-'}</td>
+      <td class="py-1.5 px-1.5 sm:px-2 text-right font-semibold text-amber-700 whitespace-nowrap text-[10.5px]">${formatRupiah(rec.penjualanShopDrive)}</td>
+      <td class="py-1.5 px-1.5 sm:px-2 text-right font-semibold text-indigo-700 whitespace-nowrap text-[10.5px]">${formatRupiah(rec.penjualanBimaMotor)}</td>
+      <td class="py-1.5 px-1.5 sm:px-2 text-right font-semibold text-emerald-700 whitespace-nowrap text-[10.5px]" title="${rec.keteranganPemasukanLain ? rec.keteranganPemasukanLain : ''}">${formatRupiah(rec.pemasukanLain || 0)}</td>
+      <td class="py-1.5 px-1.5 sm:px-2 text-right font-black text-blue-900 bg-blue-50/40 whitespace-nowrap text-[10.5px]">${formatRupiah(rec.totalPemasukan)}</td>
+      <td class="py-1.5 px-1.5 sm:px-2 text-right text-slate-600 whitespace-nowrap text-[10.5px]">${formatRupiah(rec.transferMandiri)}</td>
+      <td class="py-1.5 px-1.5 sm:px-2 text-right text-slate-600 whitespace-nowrap text-[10.5px]">${formatRupiah(rec.cardEdc)}</td>
+      <td class="py-1.5 px-1.5 sm:px-2 text-right text-slate-600 whitespace-nowrap text-[10.5px]">${formatRupiah(rec.penghematanTradeIn)}</td>
+      <td class="py-1.5 px-1.5 sm:px-2 text-right font-semibold text-rose-600 whitespace-nowrap text-[10.5px]">${formatRupiah(rec.biayaOperasional)}</td>
+      <td class="py-1.5 px-1.5 sm:px-2 text-right font-black text-emerald-950 bg-emerald-50 whitespace-nowrap text-[10.5px]">${formatRupiah(rec.sisaUangKasKecil)}</td>
+      <td class="py-1.5 px-1.5 sm:px-2 text-center whitespace-nowrap">${checklistStatus}</td>
+      <td class="py-1.5 px-1 sm:px-1.5 text-center whitespace-nowrap">
         <div class="inline-flex items-center gap-0.5">
-          <button class="btn-load-record p-1 text-blue-600 hover:bg-blue-50 rounded-md transition" data-id="${rec.id}" title="Muat ke Form">
-            <i class="fa-solid fa-pen-to-square text-xs"></i>
+          <button class="btn-load-record p-1 text-blue-600 hover:bg-blue-50 rounded transition" data-id="${rec.id}" title="Muat ke Form">
+            <i class="fa-solid fa-pen-to-square text-[11px]"></i>
           </button>
-          <button class="btn-pdf-record p-1 text-rose-600 hover:bg-rose-50 rounded-md transition" data-id="${rec.id}" title="Unduh PDF">
-            <i class="fa-solid fa-file-pdf text-xs"></i>
+          <button class="btn-pdf-record p-1 text-rose-600 hover:bg-rose-50 rounded transition" data-id="${rec.id}" title="Unduh PDF">
+            <i class="fa-solid fa-file-pdf text-[11px]"></i>
           </button>
-          <button class="btn-print-record p-1 text-slate-700 hover:bg-slate-100 rounded-md transition" data-id="${rec.id}" title="Cetak Rekap">
-            <i class="fa-solid fa-print text-xs"></i>
+          <button class="btn-print-record p-1 text-slate-700 hover:bg-slate-100 rounded transition" data-id="${rec.id}" title="Cetak Rekap">
+            <i class="fa-solid fa-print text-[11px]"></i>
           </button>
-          <button class="btn-delete-record p-1 text-rose-400 hover:text-rose-700 hover:bg-rose-50 rounded-md transition" data-id="${rec.id}" title="Hapus Data">
-            <i class="fa-solid fa-trash text-xs"></i>
+          <button class="btn-delete-record p-1 text-rose-400 hover:text-rose-700 hover:bg-rose-50 rounded transition" data-id="${rec.id}" title="Hapus Data">
+            <i class="fa-solid fa-trash text-[11px]"></i>
           </button>
         </div>
       </td>
@@ -972,39 +1009,40 @@ function renderHistoryTable() {
   // Render Footer Grand Total Row (Jumlah ke bawah)
   if (tfoot) {
     const totalSelisihBadge = sumSelisih === 0 
-      ? '<span class="inline-flex items-center px-1.5 py-0.2 rounded text-[9.5px] font-black bg-emerald-200 text-emerald-950 shadow-xs">Pas (Rp 0)</span>'
+      ? '<span class="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-black bg-emerald-200 text-emerald-950 shadow-xs">Pas (Rp 0)</span>'
       : (sumSelisih > 0 
-          ? `<span class="inline-flex items-center px-1.5 py-0.2 rounded text-[9.5px] font-black bg-amber-200 text-amber-950 shadow-xs">+${formatRupiah(sumSelisih)}</span>`
-          : `<span class="inline-flex items-center px-1.5 py-0.2 rounded text-[9.5px] font-black bg-rose-200 text-rose-950 shadow-xs">${formatRupiah(sumSelisih)}</span>`);
+          ? `<span class="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-black bg-amber-200 text-amber-950 shadow-xs">+${formatRupiah(sumSelisih)}</span>`
+          : `<span class="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-black bg-rose-200 text-rose-950 shadow-xs">${formatRupiah(sumSelisih)}</span>`);
 
     const takenSummary = `
       <div class="flex flex-col items-center gap-0.5">
-        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">
-          <i class="fa-solid fa-check mr-1 text-emerald-600"></i> ${takenCount} Diambil
+        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">
+          <i class="fa-solid fa-check mr-0.5 text-emerald-600"></i> ${takenCount} Diambil
         </span>
-        ${untakenCount > 0 ? `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-amber-100 text-amber-900 border border-amber-200"><i class="fa-regular fa-clock mr-1 text-amber-600"></i> ${untakenCount} Belum</span>` : ''}
+        ${untakenCount > 0 ? `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-900 border border-amber-200"><i class="fa-regular fa-clock mr-0.5 text-amber-600"></i> ${untakenCount} Belum</span>` : ''}
         <div class="mt-0.5">${totalSelisihBadge}</div>
       </div>
     `;
 
     tfoot.innerHTML = `
       <tr>
-        <td colspan="2" class="py-2 px-2.5 text-center uppercase tracking-wider font-extrabold text-slate-800 bg-slate-200/90 rounded-bl-lg">
+        <td colspan="2" class="py-1.5 px-1.5 sm:px-2 text-center uppercase tracking-wider font-extrabold text-slate-800 bg-slate-200/90 rounded-bl-lg text-[10px]">
           <div class="flex items-center justify-center gap-1">
             <i class="fa-solid fa-sigma text-blue-700"></i>
-            <span>TOTAL (${filtered.length} Hari)</span>
+            <span>TOTAL (${filtered.length})</span>
           </div>
         </td>
-        <td class="py-2 px-2.5 text-right font-black text-amber-800 bg-amber-50/80 whitespace-nowrap border-l border-slate-200">${formatRupiah(sumShopDrive)}</td>
-        <td class="py-2 px-2.5 text-right font-black text-indigo-800 bg-indigo-50/80 whitespace-nowrap border-l border-slate-200">${formatRupiah(sumBimaMotor)}</td>
-        <td class="py-2 px-2.5 text-right font-black text-blue-950 bg-blue-100/90 whitespace-nowrap border-l border-slate-200">${formatRupiah(sumPemasukan)}</td>
-        <td class="py-2 px-2.5 text-right font-bold text-slate-800 whitespace-nowrap border-l border-slate-200">${formatRupiah(sumMandiri)}</td>
-        <td class="py-2 px-2.5 text-right font-bold text-slate-800 whitespace-nowrap border-l border-slate-200">${formatRupiah(sumEdc)}</td>
-        <td class="py-2 px-2.5 text-right font-bold text-slate-800 whitespace-nowrap border-l border-slate-200">${formatRupiah(sumTradeIn)}</td>
-        <td class="py-2 px-2.5 text-right font-black text-rose-700 bg-rose-50/80 whitespace-nowrap border-l border-slate-200">${formatRupiah(sumBiayaOps)}</td>
-        <td class="py-2 px-2.5 text-right font-black text-emerald-950 bg-emerald-200 whitespace-nowrap border-l border-emerald-300 text-xs">${formatRupiah(sumSisaKas)}</td>
-        <td class="py-2 px-2.5 text-center whitespace-nowrap border-l border-slate-200">${takenSummary}</td>
-        <td class="py-2 px-2.5 text-center whitespace-nowrap border-l border-slate-200 text-[10px] text-slate-500 font-bold">Total</td>
+        <td class="py-1.5 px-1.5 sm:px-2 text-right font-black text-amber-800 bg-amber-50/80 whitespace-nowrap border-l border-slate-200 text-[10.5px]">${formatRupiah(sumShopDrive)}</td>
+        <td class="py-1.5 px-1.5 sm:px-2 text-right font-black text-indigo-800 bg-indigo-50/80 whitespace-nowrap border-l border-slate-200 text-[10.5px]">${formatRupiah(sumBimaMotor)}</td>
+        <td class="py-1.5 px-1.5 sm:px-2 text-right font-black text-emerald-800 bg-emerald-50/80 whitespace-nowrap border-l border-slate-200 text-[10.5px]">${formatRupiah(sumPemasukanLain)}</td>
+        <td class="py-1.5 px-1.5 sm:px-2 text-right font-black text-blue-950 bg-blue-100/90 whitespace-nowrap border-l border-slate-200 text-[10.5px]">${formatRupiah(sumPemasukan)}</td>
+        <td class="py-1.5 px-1.5 sm:px-2 text-right font-bold text-slate-800 whitespace-nowrap border-l border-slate-200 text-[10.5px]">${formatRupiah(sumMandiri)}</td>
+        <td class="py-1.5 px-1.5 sm:px-2 text-right font-bold text-slate-800 whitespace-nowrap border-l border-slate-200 text-[10.5px]">${formatRupiah(sumEdc)}</td>
+        <td class="py-1.5 px-1.5 sm:px-2 text-right font-bold text-slate-800 whitespace-nowrap border-l border-slate-200 text-[10.5px]">${formatRupiah(sumTradeIn)}</td>
+        <td class="py-1.5 px-1.5 sm:px-2 text-right font-black text-rose-700 bg-rose-50/80 whitespace-nowrap border-l border-slate-200 text-[10.5px]">${formatRupiah(sumBiayaOps)}</td>
+        <td class="py-1.5 px-1.5 sm:px-2 text-right font-black text-emerald-950 bg-emerald-200 whitespace-nowrap border-l border-emerald-300 text-[10.5px]">${formatRupiah(sumSisaKas)}</td>
+        <td class="py-1.5 px-1.5 sm:px-2 text-center whitespace-nowrap border-l border-slate-200">${takenSummary}</td>
+        <td class="py-1.5 px-1 text-center whitespace-nowrap border-l border-slate-200 text-[9px] text-slate-500 font-bold">Total</td>
       </tr>
     `;
   }
@@ -1055,6 +1093,8 @@ function saveCurrentRecord() {
     saldoAwal: calc.saldoAwal,
     penjualanShopDrive: calc.penjualanShopDrive,
     penjualanBimaMotor: calc.penjualanBimaMotor,
+    pemasukanLain: calc.pemasukanLain,
+    keteranganPemasukanLain: calc.keteranganPemasukanLain,
     totalPemasukan: calc.totalPemasukan,
     transferMandiri: calc.transferMandiri,
     cardEdc: calc.cardEdc,
@@ -1099,6 +1139,37 @@ function toggleSudahDiambil(id, status) {
   }
 }
 
+// Helper to set cashier dropdown value safely, supporting custom/historical names
+function setKasirValue(val) {
+  const el = document.getElementById('inputKasir');
+  if (!el) return;
+  const target = (val || '').trim();
+  if (!target) {
+    el.value = '';
+    return;
+  }
+  let found = false;
+  for (let i = 0; i < el.options.length; i++) {
+    if (el.options[i].value.toLowerCase() === target.toLowerCase()) {
+      el.selectedIndex = i;
+      found = true;
+      break;
+    }
+  }
+  if (!found) {
+    const opt = document.createElement('option');
+    opt.value = target;
+    opt.textContent = target;
+    const customOpt = el.querySelector('option[value="__custom__"]');
+    if (customOpt) {
+      el.insertBefore(opt, customOpt);
+    } else {
+      el.appendChild(opt);
+    }
+    el.value = target;
+  }
+}
+
 // Load a record back to form
 function loadRecordToForm(id) {
   const records = getSavedRecords();
@@ -1106,11 +1177,13 @@ function loadRecordToForm(id) {
   if (!record) return;
 
   document.getElementById('inputTanggal').value = record.tanggal || '';
-  document.getElementById('inputKasir').value = record.kasir || '';
+  setKasirValue(record.kasir || '');
   document.getElementById('inputCatatan').value = record.catatan || '';
   document.getElementById('inputSaldoAwal').value = Number(record.saldoAwal || 0).toLocaleString('id-ID');
   document.getElementById('inputPenjualanShopDrive').value = Number(record.penjualanShopDrive || 0).toLocaleString('id-ID');
   document.getElementById('inputPenjualanBimaMotor').value = Number(record.penjualanBimaMotor || 0).toLocaleString('id-ID');
+  document.getElementById('inputPemasukanLain').value = Number(record.pemasukanLain || 0).toLocaleString('id-ID');
+  document.getElementById('inputKeteranganPemasukanLain').value = record.keteranganPemasukanLain || '';
   document.getElementById('inputTransferMandiri').value = Number(record.transferMandiri || 0).toLocaleString('id-ID');
   document.getElementById('inputCardEdc').value = Number(record.cardEdc || 0).toLocaleString('id-ID');
   document.getElementById('inputPenghematanTradeIn').value = Number(record.penghematanTradeIn || 0).toLocaleString('id-ID');
@@ -1154,11 +1227,13 @@ function clearAllHistory() {
 function resetForm() {
   if (!confirm('Kosongkan semua isian form kas?')) return;
   const settings = getAppSettings();
-  document.getElementById('inputKasir').value = settings.defaultKasir || '';
+  setKasirValue(settings.defaultKasir || '');
   document.getElementById('inputCatatan').value = '';
   document.getElementById('inputSaldoAwal').value = Number(settings.defaultModal || 0).toLocaleString('id-ID');
   document.getElementById('inputPenjualanShopDrive').value = '0';
   document.getElementById('inputPenjualanBimaMotor').value = '0';
+  document.getElementById('inputPemasukanLain').value = '0';
+  document.getElementById('inputKeteranganPemasukanLain').value = '';
   document.getElementById('inputTransferMandiri').value = '0';
   document.getElementById('inputCardEdc').value = '0';
   document.getElementById('inputPenghematanTradeIn').value = '0';
@@ -1182,6 +1257,8 @@ function exportToExcelCSV() {
     'Saldo Awal Kas',
     'Penjualan Shop & Drive',
     'Penjualan Bima Motor',
+    'Sumber Pemasukan Lain',
+    'Ket Pemasukan Lain',
     'Total Pemasukan',
     'Transfer Bank Mandiri',
     'Card / EDC',
@@ -1204,6 +1281,8 @@ function exportToExcelCSV() {
       r.saldoAwal || 0,
       r.penjualanShopDrive || 0,
       r.penjualanBimaMotor || 0,
+      r.pemasukanLain || 0,
+      `"${(r.keteranganPemasukanLain || '').replace(/"/g, '""')}"`,
       r.totalPemasukan || 0,
       r.transferMandiri || 0,
       r.cardEdc || 0,
@@ -1221,6 +1300,7 @@ function exportToExcelCSV() {
   // Calculate and append Grand Total row
   const sumShopDrive = records.reduce((s, r) => s + (Number(r.penjualanShopDrive) || 0), 0);
   const sumBimaMotor = records.reduce((s, r) => s + (Number(r.penjualanBimaMotor) || 0), 0);
+  const sumPemasukanLain = records.reduce((s, r) => s + (Number(r.pemasukanLain) || 0), 0);
   const sumPemasukan = records.reduce((s, r) => s + (Number(r.totalPemasukan) || 0), 0);
   const sumMandiri = records.reduce((s, r) => s + (Number(r.transferMandiri) || 0), 0);
   const sumEdc = records.reduce((s, r) => s + (Number(r.cardEdc) || 0), 0);
@@ -1237,6 +1317,8 @@ function exportToExcelCSV() {
     `""`,
     sumShopDrive,
     sumBimaMotor,
+    sumPemasukanLain,
+    `""`,
     sumPemasukan,
     sumMandiri,
     sumEdc,
@@ -1264,8 +1346,8 @@ function exportToExcelCSV() {
 
 // Download Blank Template CSV
 function downloadBlankTemplate() {
-  const csvTemplate = '\uFEFFTanggal;Kasir / Shift;Saldo Awal Kas;Penjualan Shop & Drive;Penjualan Bima Motor;Total Pemasukan;Transfer Bank Mandiri;Card / EDC;Penghematan / Trade In;Pengeluaran Biaya Operasional;Total Pengeluaran Kas;Sisa Uang di Kas Kecil;Uang Fisik Riil Laci;Selisih Kas;Catatan / Rincian Biaya Ops\n' +
-    ';;;;;;=SUM(D2:D2);=SUM(E2:E2);=SUM(F2:F2);;;;=SUM(K2:K2);;;;\n';
+  const csvTemplate = '\uFEFFTanggal;Kasir / Shift;Saldo Awal Kas;Penjualan Shop & Drive;Penjualan Bima Motor;Sumber Pemasukan Lain;Ket Pemasukan Lain;Total Pemasukan;Transfer Bank Mandiri;Card / EDC;Penghematan / Trade In;Pengeluaran Biaya Operasional;Total Pengeluaran Kas;Sisa Uang di Kas Kecil;Uang Fisik Riil Laci;Selisih Kas;Catatan / Rincian Biaya Ops\n' +
+    ';;;;;;;=SUM(D2:F2);;;;;;;;;;\n';
 
   const blob = new Blob([csvTemplate], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -1275,6 +1357,110 @@ function downloadBlankTemplate() {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+}
+
+// -------------------------------------------------------------
+// OWNER SECURITY PIN VERIFICATION (PIN: 2209)
+// -------------------------------------------------------------
+const OWNER_SECURITY_PIN = '2209';
+const OWNER_AUTH_SESSION_KEY = 'owner_pin_auth_session';
+
+function setupOwnerPinModal() {
+  const btnNav = document.getElementById('btnNavMonitoringBank');
+  const modal = document.getElementById('ownerPinModal');
+  const btnClose = document.getElementById('btnCloseOwnerPinModal');
+  const btnCancel = document.getElementById('btnCancelOwnerPin');
+  const form = document.getElementById('ownerPinForm');
+  const inputPin = document.getElementById('inputOwnerPin');
+  const errEl = document.getElementById('ownerPinError');
+  const keyBtns = document.querySelectorAll('.pin-key-btn');
+  const btnClear = document.getElementById('btnPinClear');
+  const btnBackspace = document.getElementById('btnPinBackspace');
+
+  if (!btnNav || !modal) return;
+
+  function openPinModal() {
+    // If already verified in this session, navigate directly
+    if (sessionStorage.getItem(OWNER_AUTH_SESSION_KEY) === OWNER_SECURITY_PIN) {
+      window.location.href = 'monitoring-bank.html';
+      return;
+    }
+    inputPin.value = '';
+    if (errEl) errEl.classList.add('hidden');
+    inputPin.classList.remove('border-rose-500', 'bg-rose-50/50');
+    modal.classList.remove('hidden');
+    setTimeout(() => inputPin.focus(), 100);
+  }
+
+  function closePinModal() {
+    modal.classList.add('hidden');
+    inputPin.value = '';
+    if (errEl) errEl.classList.add('hidden');
+    inputPin.classList.remove('border-rose-500', 'bg-rose-50/50');
+  }
+
+  function handleVerifyPin(e) {
+    if (e) e.preventDefault();
+    const pin = (inputPin.value || '').trim();
+    if (pin === OWNER_SECURITY_PIN) {
+      sessionStorage.setItem(OWNER_AUTH_SESSION_KEY, OWNER_SECURITY_PIN);
+      modal.classList.add('hidden');
+      window.location.href = 'monitoring-bank.html';
+    } else {
+      if (errEl) {
+        errEl.classList.remove('hidden');
+        inputPin.classList.add('border-rose-500', 'bg-rose-50/50');
+      }
+      inputPin.value = '';
+      inputPin.focus();
+    }
+  }
+
+  btnNav.addEventListener('click', openPinModal);
+  btnClose?.addEventListener('click', closePinModal);
+  btnCancel?.addEventListener('click', closePinModal);
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closePinModal();
+  });
+
+  keyBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (errEl) errEl.classList.add('hidden');
+      inputPin.classList.remove('border-rose-500', 'bg-rose-50/50');
+      if (inputPin.value.length < 4) {
+        inputPin.value += btn.getAttribute('data-val');
+        if (inputPin.value.length === 4) {
+          handleVerifyPin();
+        }
+      }
+    });
+  });
+
+  btnClear?.addEventListener('click', () => {
+    inputPin.value = '';
+    if (errEl) errEl.classList.add('hidden');
+    inputPin.classList.remove('border-rose-500', 'bg-rose-50/50');
+    inputPin.focus();
+  });
+
+  btnBackspace?.addEventListener('click', () => {
+    inputPin.value = inputPin.value.slice(0, -1);
+    if (errEl) errEl.classList.add('hidden');
+    inputPin.classList.remove('border-rose-500', 'bg-rose-50/50');
+    inputPin.focus();
+  });
+
+  inputPin.addEventListener('input', () => {
+    inputPin.value = inputPin.value.replace(/[^0-9]/g, '').slice(0, 4);
+    if (errEl) errEl.classList.add('hidden');
+    inputPin.classList.remove('border-rose-500', 'bg-rose-50/50');
+    if (inputPin.value.length === 4) {
+      handleVerifyPin();
+    }
+  });
+
+  form?.addEventListener('submit', handleVerifyPin);
 }
 
 // Document Ready Initialization
@@ -1291,6 +1477,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     'inputSaldoAwal', 
     'inputPenjualanShopDrive', 
     'inputPenjualanBimaMotor', 
+    'inputPemasukanLain',
     'inputTransferMandiri', 
     'inputCardEdc', 
     'inputPenghematanTradeIn', 
@@ -1305,16 +1492,34 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('inputSaldoAwal').value = Number(settings.defaultModal || 0).toLocaleString('id-ID');
   document.getElementById('inputPenjualanShopDrive').value = '0';
   document.getElementById('inputPenjualanBimaMotor').value = '0';
+  document.getElementById('inputPemasukanLain').value = '0';
+  const ketLainEl = document.getElementById('inputKeteranganPemasukanLain');
+  if (ketLainEl) ketLainEl.value = '';
   document.getElementById('inputTransferMandiri').value = '0';
   document.getElementById('inputCardEdc').value = '0';
   document.getElementById('inputPenghematanTradeIn').value = '0';
   document.getElementById('inputFisikRiil').value = '0';
-  document.getElementById('inputKasir').value = settings.defaultKasir || '';
+  setKasirValue(settings.defaultKasir || '');
+
+  // Cashier dropdown listener
+  const inputKasirEl = document.getElementById('inputKasir');
+  inputKasirEl?.addEventListener('change', function () {
+    if (this.value === '__custom__') {
+      const customName = prompt('Masukkan Nama Kasir Baru / Pengganti:');
+      if (customName && customName.trim()) {
+        setKasirValue(customName.trim());
+      } else {
+        this.value = '';
+      }
+    }
+    recalculateAll();
+  });
 
   // Setup Modules
   setupCalendarControls();
   setupDenominationCounter();
   setupDatabaseModal();
+  setupOwnerPinModal();
 
   // Button actions
   document.getElementById('btnAddExpense')?.addEventListener('click', addExpenseItem);

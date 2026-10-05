@@ -40,6 +40,44 @@ input, button, select {
   position: relative;
 }
 
+/* Compact Table Layout for full-screen fit */
+#historyTable {
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
+}
+
+#historyTable th, #historyTable td {
+  padding-left: 0.35rem;
+  padding-right: 0.35rem;
+  padding-top: 0.35rem;
+  padding-bottom: 0.35rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 1440px) {
+  #historyTable {
+    font-size: 10.5px;
+  }
+  #historyTable th {
+    font-size: 9.5px;
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+  }
+  #historyTable td {
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+  }
+}
+
+@media (max-width: 1280px) {
+  #historyTable {
+    font-size: 10px;
+  }
+  #historyTable th {
+    font-size: 9px;
+  }
+}
+
 /* Print layout */
 @media print {
   body * {

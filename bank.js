@@ -934,10 +934,112 @@ function exportBankToExcelCSV() {
 }
 
 // -------------------------------------------------------------
+// OWNER SECURITY PIN VERIFICATION (PIN: 2209)
+// -------------------------------------------------------------
+const OWNER_SECURITY_PIN = '2209';
+const OWNER_AUTH_SESSION_KEY = 'owner_pin_auth_session';
+
+function setupOwnerSecurityGate() {
+  const overlay = document.getElementById('bankSecurityOverlay');
+  const form = document.getElementById('directPinForm');
+  const inputPin = document.getElementById('inputDirectPin');
+  const errEl = document.getElementById('directPinError');
+  const keyBtns = document.querySelectorAll('.direct-pin-key-btn');
+  const btnClear = document.getElementById('btnDirectPinClear');
+  const btnBackspace = document.getElementById('btnDirectPinBackspace');
+  const btnLock = document.getElementById('btnLockOwnerSession');
+
+  // Lock / Logout session button in header
+  btnLock?.addEventListener('click', () => {
+    if (confirm('Kunci akses Owner dan kembali ke Beranda Kas Kecil?')) {
+      sessionStorage.removeItem(OWNER_AUTH_SESSION_KEY);
+      window.location.href = 'index.html';
+    }
+  });
+
+  // Check current session
+  const isAuth = sessionStorage.getItem(OWNER_AUTH_SESSION_KEY) === OWNER_SECURITY_PIN;
+
+  if (!isAuth) {
+    if (overlay) {
+      overlay.classList.remove('hidden');
+      setTimeout(() => inputPin?.focus(), 150);
+    }
+  } else {
+    if (overlay) {
+      overlay.classList.add('hidden');
+    }
+  }
+
+  function handleVerifyDirectPin(e) {
+    if (e) e.preventDefault();
+    if (!inputPin) return;
+    const pin = (inputPin.value || '').trim();
+    if (pin === OWNER_SECURITY_PIN) {
+      sessionStorage.setItem(OWNER_AUTH_SESSION_KEY, OWNER_SECURITY_PIN);
+      overlay?.classList.add('hidden');
+      if (errEl) errEl.classList.add('hidden');
+      inputPin.classList.remove('border-rose-500', 'bg-rose-50/50');
+    } else {
+      if (errEl) {
+        errEl.classList.remove('hidden');
+        inputPin.classList.add('border-rose-500', 'bg-rose-50/50');
+      }
+      inputPin.value = '';
+      inputPin.focus();
+    }
+  }
+
+  keyBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!inputPin) return;
+      if (errEl) errEl.classList.add('hidden');
+      inputPin.classList.remove('border-rose-500', 'bg-rose-50/50');
+      if (inputPin.value.length < 4) {
+        inputPin.value += btn.getAttribute('data-val');
+        if (inputPin.value.length === 4) {
+          handleVerifyDirectPin();
+        }
+      }
+    });
+  });
+
+  btnClear?.addEventListener('click', () => {
+    if (!inputPin) return;
+    inputPin.value = '';
+    if (errEl) errEl.classList.add('hidden');
+    inputPin.classList.remove('border-rose-500', 'bg-rose-50/50');
+    inputPin.focus();
+  });
+
+  btnBackspace?.addEventListener('click', () => {
+    if (!inputPin) return;
+    inputPin.value = inputPin.value.slice(0, -1);
+    if (errEl) errEl.classList.add('hidden');
+    inputPin.classList.remove('border-rose-500', 'bg-rose-50/50');
+    inputPin.focus();
+  });
+
+  inputPin?.addEventListener('input', () => {
+    inputPin.value = inputPin.value.replace(/[^0-9]/g, '').slice(0, 4);
+    if (errEl) errEl.classList.add('hidden');
+    inputPin.classList.remove('border-rose-500', 'bg-rose-50/50');
+    if (inputPin.value.length === 4) {
+      handleVerifyDirectPin();
+    }
+  });
+
+  form?.addEventListener('submit', handleVerifyDirectPin);
+}
+
+// -------------------------------------------------------------
 // INITIALIZATION
 // -------------------------------------------------------------
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Check Owner Security Gate first
+  setupOwnerSecurityGate();
+
   // Setup Number Inputs
   setupNumberInput(document.getElementById('inputRestokNominal'));
   setupNumberInput(document.getElementById('inputPenarikanNominal'));

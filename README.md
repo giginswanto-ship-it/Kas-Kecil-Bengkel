@@ -6,7 +6,7 @@ Aplikasi Web modern & responsif untuk sistem pencatatan, kalkulasi otomatis, dan
 
 ## 🧮 Rumus Baku & Logika Keuangan
 
-1. **Total Pemasukan** = Penjualan Shop & Drive + Penjualan Bima Motor
+1. **Total Pemasukan** = Penjualan Shop & Drive + Penjualan Bima Motor + Sumber Pemasukan Lain
 2. **Total Pengeluaran Kas** = Transfer Bank Mandiri + Pembayaran Card/EDC + Penghematan/Trade In + Pengeluaran Biaya Operasional
 3. **Sisa Uang di Kas Kecil** = (Saldo Awal + Total Pemasukan) - Total Pengeluaran Kas
 4. **Selisih Kasir** = Uang Fisik Riil di Laci - Sisa Uang di Kas Kecil
@@ -17,7 +17,7 @@ Aplikasi Web modern & responsif untuk sistem pencatatan, kalkulasi otomatis, dan
 
 - **Sistem Database Terintegrasi**: Menggunakan engine database **IndexedDB** & **LocalStorage** dengan dukungan backup/restore file JSON dan SQL Dump.
 - **Kalender Harian Interaktif**: Memilih dan melihat status rekapitulasi kas harian per tanggal secara visual (titik hijau penanda tanggal yang telah memiliki data rekap).
-- **Pemisahan Sumber Pemasukan**: Mencatat omset terpisah antara Shop & Drive dan Bima Motor secara otomatis.
+- **Pemisahan Sumber Pemasukan**: Mencatat omset terpisah antara Shop & Drive, Bima Motor, serta Sumber Pemasukan Lain (jasa derek, scrap aki bekas, titipan, dll).
 - **Auto-Kalkulasi Realtime**: Perhitungan langsung berjalan seketika saat kasir mengetik nominal.
 - **Rincian Pengeluaran Operasional Dinamis**: Kasir dapat menambah/menghapus baris bon pengeluaran kas kecil (bensin, makan siang, sparepart darurat, dll).
 - **Kalkulator Pecahan Uang Fisik (Denomination Counter)**: Mempermudah kasir menghitung lembaran (Rp 100rb, 50rb, 20rb, 10rb, 5rb, 2rb, 1rb) dan uang koin saat tutup shift / serah terima kasir.
@@ -41,7 +41,7 @@ Aplikasi Web modern & responsif untuk sistem pencatatan, kalkulasi otomatis, dan
 
 1. Buka file \`index.html\` langsung di web browser (Google Chrome, Microsoft Edge, Mozilla Firefox).
 2. Masukkan tanggal, shift, dan saldo awal modal kasir.
-3. Input nominal Penjualan Shop & Drive dan Bima Motor.
+3. Input nominal Penjualan Shop & Drive, Bima Motor, dan Sumber Pemasukan Lain (beserta keterangannya).
 4. Input potongan non-tunai (Transfer Mandiri, EDC Card, Penghematan/Trade In) dan rincian biaya operasional.
 5. Hitung fisik uang di laci menggunakan kalkulator pecahan atau input langsung di kolom Uang Fisik Riil.
 6. Klik **Simpan ke Database & Riwayat** atau **Cetak Berita Acara Kas**.
