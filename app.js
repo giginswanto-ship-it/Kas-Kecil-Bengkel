@@ -449,7 +449,12 @@ function updateYesterdaySaldoInfo(dateStr) {
 
   const prev = findYesterdayRecord(dateStr);
   if (prev) {
-    infoEl.innerHTML = `<span class="text-blue-700 font-bold">Kemarin (${formatTanggalIndo(prev.tanggal, false)}):</span> Sisa Kas <strong class="text-emerald-700 font-black">${formatRupiah(prev.sisaUangKasKecil)}</strong>`;
+    const isTaken = prev.sudahDiambil === true;
+    if (isTaken) {
+      infoEl.innerHTML = `<span class="text-blue-700 font-bold">Kemarin (${formatTanggalIndo(prev.tanggal, false)}):</span> <span class="inline-flex items-center gap-1 text-emerald-800 font-bold bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-300 text-[10px]"><i class="fa-solid fa-circle-check text-emerald-600"></i> Sudah Diambil Owner &bull; Saldo Hari Ini: <strong class="text-emerald-950 font-black">Rp 0 (NOL)</strong></span>`;
+    } else {
+      infoEl.innerHTML = `<span class="text-blue-700 font-bold">Kemarin (${formatTanggalIndo(prev.tanggal, false)}):</span> <span class="inline-flex items-center gap-1 text-amber-800 font-bold bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-300 text-[10px]"><i class="fa-regular fa-clock text-amber-600"></i> Belum Diambil &bull; Sisa Kas: <strong class="text-emerald-700 font-black">${formatRupiah(prev.sisaUangKasKecil)}</strong></span>`;
+    }
   } else {
     infoEl.innerText = 'Modal awal laci / sisa kas shift sebelumnya';
   }
@@ -464,14 +469,19 @@ function tarikSaldoKemarin() {
     return;
   }
 
-  const sisa = Number(prev.sisaUangKasKecil || 0);
+  const isTaken = prev.sudahDiambil === true;
+  const sisa = isTaken ? 0 : Number(prev.sisaUangKasKecil || 0);
   const inputModal = document.getElementById('inputSaldoAwal');
   if (inputModal) {
     inputModal.value = sisa.toLocaleString('id-ID');
     recalculateAll();
   }
 
-  alert(`Saldo Awal berhasil disesuaikan dengan Sisa Kas ${formatTanggalIndo(prev.tanggal, false)} (${prev.kasir || 'Kasir'}): ${formatRupiah(sisa)}`);
+  if (isTaken) {
+    alert(`[KAS SUDAH DIAMBIL OWNER]\n\nSisa uang kas tanggal ${formatTanggalIndo(prev.tanggal, false)} (${formatRupiah(prev.sisaUangKasKecil)}) sudah diambil oleh Owner.\n\nSesuai aturan sistem, Saldo Awal kas laci hari ini otomatis menjadi Rp 0 (NOL).`);
+  } else {
+    alert(`Saldo Awal berhasil disesuaikan dengan Sisa Kas ${formatTanggalIndo(prev.tanggal, false)} (${prev.kasir || 'Kasir'}): ${formatRupiah(sisa)} (Belum Diambil Owner).`);
+  }
 }
 
 // Siapkan formulir bersih untuk tanggal baru
@@ -490,10 +500,18 @@ function prepareNewFormForDate(dateStr) {
   currentExpenses = [];
   renderExpenses();
 
-  // Otomatis tawarkan/isi sisa kas kemarin jika ada
+  // Otomatis cek status kas kemarin:
+  // JIKA SUDAH DIAMBIL OWNER -> SALDO AWAL HARI BERIKUTNYA = 0 (NOL)
+  // JIKA BELUM DIAMBIL OWNER -> SALDO AWAL HARI BERIKUTNYA = SISA KAS KEMARIN
   const yesterday = findYesterdayRecord(dateStr);
-  if (yesterday && Number(yesterday.sisaUangKasKecil) > 0) {
-    document.getElementById('inputSaldoAwal').value = Number(yesterday.sisaUangKasKecil || 0).toLocaleString('id-ID');
+  if (yesterday) {
+    if (yesterday.sudahDiambil === true) {
+      document.getElementById('inputSaldoAwal').value = '0';
+    } else if (Number(yesterday.sisaUangKasKecil) > 0) {
+      document.getElementById('inputSaldoAwal').value = Number(yesterday.sisaUangKasKecil || 0).toLocaleString('id-ID');
+    } else {
+      document.getElementById('inputSaldoAwal').value = Number(settings.defaultModal || 0).toLocaleString('id-ID');
+    }
   } else {
     document.getElementById('inputSaldoAwal').value = Number(settings.defaultModal || 0).toLocaleString('id-ID');
   }
@@ -1441,10 +1459,14 @@ function promptOwnerPinForStatus(recId) {
   const targetStatusLabel = targetStatus ? 'SUDAH DIAMBIL' : 'BELUM DIAMBIL';
   const targetTanggal = formatTanggalIndo(rec.tanggal, false);
 
+  const saldoNextDayInfo = targetStatus 
+    ? '\n\nSaldo kas laci hari berikutnya otomatis menjadi Rp 0 (NOL).' 
+    : `\n\nSisa kas ${formatRupiah(rec.sisaUangKasKecil)} akan diestafetkan ke hari berikutnya.`;
+
   openOwnerPinModal(
     () => {
       toggleSudahDiambil(recId, targetStatus);
-      alert(`[OTORISASI OWNER BERHASIL]\n\nStatus kas tanggal ${targetTanggal} (${rec.kasir || 'Kasir'}) berhasil diubah menjadi: ${targetStatusLabel}.`);
+      alert(`[OTORISASI OWNER BERHASIL]\n\nStatus kas tanggal ${targetTanggal} (${rec.kasir || 'Kasir'}) berhasil diubah menjadi: ${targetStatusLabel}.${saldoNextDayInfo}`);
     },
     'Status Kas (Owner)',
     'Otorisasi Khusus Owner',
@@ -1456,23 +1478,81 @@ function promptOwnerPinForStatus(recId) {
 function toggleSudahDiambil(id, status) {
   const records = getSavedRecords();
   const rec = records.find(r => r.id === id);
-  if (rec) {
-    rec.sudahDiambil = (typeof status === 'boolean') ? status : !rec.sudahDiambil;
-    rec.statusUpdatedAt = new Date().toISOString();
-    saveRecordsToStorage(records);
+  if (!rec) return;
 
-    // Sync ke server backend lokal jika aktif
-    try {
-      fetch('http://localhost:3000/api/records', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(rec)
-      }).catch(() => {});
-    } catch (e) {}
+  rec.sudahDiambil = (typeof status === 'boolean') ? status : !rec.sudahDiambil;
+  rec.statusUpdatedAt = new Date().toISOString();
 
-    renderHistoryTable();
-    renderCalendar();
+  // Sinkronisasi aturan: Jika kas sudah diambil owner, maka saldo hari berikutnya NOL
+  const nextRecord = records
+    .filter(r => r.tanggal && r.tanggal > rec.tanggal)
+    .sort((a, b) => a.tanggal.localeCompare(b.tanggal))[0];
+
+  if (nextRecord) {
+    if (rec.sudahDiambil === true) {
+      // Kas kemarin sudah diambil owner -> saldo awal hari berikutnya menjadi 0 (NOL)
+      if (nextRecord.saldoAwal === rec.sisaUangKasKecil || nextRecord.saldoAwal > 0) {
+        nextRecord.saldoAwal = 0;
+        nextRecord.sisaUangKasKecil = (nextRecord.saldoAwal + (nextRecord.totalPemasukan || 0)) - (nextRecord.totalPengeluaranKas || 0);
+        nextRecord.selisih = (nextRecord.fisikRiil || 0) - nextRecord.sisaUangKasKecil;
+        try {
+          fetch('http://localhost:3000/api/records', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(nextRecord)
+          }).catch(() => {});
+        } catch (e) {}
+      }
+    } else {
+      // Kas kemarin batal/belum diambil -> estafetkan kembali sisa kas kemarin
+      if (nextRecord.saldoAwal === 0 && Number(rec.sisaUangKasKecil) > 0) {
+        nextRecord.saldoAwal = rec.sisaUangKasKecil;
+        nextRecord.sisaUangKasKecil = (nextRecord.saldoAwal + (nextRecord.totalPemasukan || 0)) - (nextRecord.totalPengeluaranKas || 0);
+        nextRecord.selisih = (nextRecord.fisikRiil || 0) - nextRecord.sisaUangKasKecil;
+        try {
+          fetch('http://localhost:3000/api/records', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(nextRecord)
+          }).catch(() => {});
+        } catch (e) {}
+      }
+    }
   }
+
+  saveRecordsToStorage(records);
+
+  // Sync ke server backend lokal jika aktif untuk rec
+  try {
+    fetch('http://localhost:3000/api/records', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(rec)
+    }).catch(() => {});
+  } catch (e) {}
+
+  // Update tampilan form yang sedang terbuka di layar jika berada pada tanggal setelahnya
+  const activeDate = document.getElementById('inputTanggal')?.value;
+  if (activeDate) {
+    updateYesterdaySaldoInfo(activeDate);
+    const isSaved = records.some(r => r.tanggal === activeDate);
+    if (!isSaved && activeDate > rec.tanggal) {
+      if (rec.sudahDiambil === true) {
+        document.getElementById('inputSaldoAwal').value = '0';
+      } else if (Number(rec.sisaUangKasKecil) > 0) {
+        document.getElementById('inputSaldoAwal').value = Number(rec.sisaUangKasKecil).toLocaleString('id-ID');
+      }
+      recalculateAll();
+    } else if (isSaved && activeDate > rec.tanggal) {
+      const curRec = records.find(r => r.tanggal === activeDate);
+      if (curRec) {
+        loadRecordToForm(curRec.id, false);
+      }
+    }
+  }
+
+  renderHistoryTable();
+  renderCalendar();
 }
 
 // Helper to set cashier dropdown value safely, supporting custom/historical names
