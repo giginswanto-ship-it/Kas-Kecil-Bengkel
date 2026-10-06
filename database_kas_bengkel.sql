@@ -1,10 +1,10 @@
 -- ============================================================================
 -- DATABASE DUMP & SKEMA RELASIONAL: MONITOR KAS KECIL BENGKEL
 -- Entitas Bisnis: Shop & Drive & Bima Motor / PT DUTARAYA BERJAYA
--- Tanggal Ekspor : 2026-10-06T07:54:04.957Z
+-- Tanggal Ekspor : 2026-10-06T12:24:51.644Z
 -- Format Data    : MySQL / MariaDB / PostgreSQL / SQLite Compatible DDL & DML
 -- Karakter Set   : UTF-8 (utf8mb4)
--- Total Record   : 35 Catatan Kas Harian | 19 Transaksi Rekening Mandiri
+-- Total Record   : 36 Catatan Kas Harian | 19 Transaksi Rekening Mandiri
 -- ============================================================================
 
 -- 1. INISIALISASI DATABASE (MySQL / MariaDB)
@@ -115,13 +115,14 @@ INSERT INTO tbl_pengaturan_sistem (setting_key, setting_value, deskripsi) VALUES
 ('saldo_awal_rekening', '29384422', 'Saldo awal buku rekening bank mandiri'),
 ('saldo_bulan_lalu', '29384422', 'Saldo buku rekening bulan lalu');
 
--- B. Data Isian Rekap Kas Harian (Total: 35 Records)
+-- B. Data Isian Rekap Kas Harian (Total: 36 Records)
 INSERT INTO tbl_rekap_kas (
   id, tanggal, kasir, saldo_awal, 
   penjualan_shop_drive, penjualan_bima_motor, pemasukan_lain, keterangan_pemasukan_lain, total_pemasukan,
   transfer_mandiri, card_edc, penghematan_trade_in, biaya_operasional, total_pengeluaran_kas,
   sisa_uang_kas_kecil, fisik_riil, selisih, sudah_diambil, catatan, created_at
 ) VALUES
+('REC-20261006-7866', '2026-10-06', 'Adis Setiawan', 0, 9147030, 400000, 0, '', 9547030, 0, 8222020, 585000, 40000, 8847020, 700010, 700000, -10, 0, '', '2026-10-06 12:05:47'),
 ('REC-20261005-1058', '2026-10-05', 'Satria jaka Surya', 0, 12428920, 100000, 1200000, 'Penjualan Oli Bekas', 13728920, 2395000, 5316910, 705000, 0, 8416910, 5312010, 5312000, -10, 1, '', '2026-10-06 00:22:01'),
 ('REC-20261004-3714', '2026-10-04', 'Satria jaka Surya', 0, 24767540, 540000, 0, '', 25307540, 1680500, 18819530, 2210000, 1150000, 23860030, 1447510, 1447500, -10, 1, '', '2026-10-06 00:15:43'),
 ('REC-20261003-8456', '2026-10-03', 'Adis Setiawan', 0, 19374030, 520000, 0, '', 19894030, 500000, 11974030, 593000, 20000, 13087030, 6807000, 6807000, 0, 1, '', '2026-10-06 00:12:48'),
@@ -132,7 +133,7 @@ INSERT INTO tbl_rekap_kas (
 ('REC-20260928-9465', '2026-09-28', 'Satria jaka Surya', 0, 13981030, 0, 0, '', 13981030, 1935000, 9708010, 980000, 78000, 12701010, 1280020, 1280000, -20, 1, '', '2026-10-05 23:58:19'),
 ('REC-20260927-9362', '2026-09-27', 'Adis Setiawan', 0, 16896050, 0, 0, '', 16896050, 2575010, 12593520, 1362000, 0, 16530530, 365520, 365520, 0, 1, '', '2026-10-05 23:53:49'),
 ('REC-20260926-9937', '2026-09-26', 'Adis Setiawan', 0, 15411530, 0, 0, '', 15411530, 1865000, 9592520, 944000, 41500, 12443020, 2968510, 2968510, 0, 1, '', '2026-10-05 23:41:39'),
-('REC-20260925-5992', '2026-09-25', 'Adis Setiawan', 0, 3819000, 0, 0, '', 3819000, 358000, 2934500, 0, 0, 3292500, 526500, 526500, 0, 1, '', '2026-10-05 23:35:45'),
+('REC-20260925-5992', '2026-09-25', 'Adis Setiawan', 0, 9147030, 400000, 0, '', 9547030, 0, 8222020, 585000, 40000, 8847020, 700010, 700000, -10, 1, '', '2026-10-06 12:04:15'),
 ('REC-1791242000785', '2026-09-24', 'Satria jaka Surya', 0, 5089040, 0, 0, '', 5089040, 772000, 3761030, 493000, 0, 5026030, 63010, 63000, -10, 1, '', '2026-10-05 23:13:20'),
 ('REC-1791241793408', '2026-09-23', 'Adis Setiawan', 0, 10111530, 400000, 0, '', 10511530, 807000, 7762520, 492000, 0, 9061520, 1450010, 1450000, -10, 1, '', '2026-10-05 23:10:13'),
 ('REC-1791239697215', '2026-09-22', 'Satria jaka Surya', 0, 17400040, 260000, 0, '', 17660040, 4925020, 11440020, 1143000, 20000, 17528040, 132000, 132000, 0, 1, '', '2026-10-05 22:35:44'),
@@ -158,8 +159,9 @@ INSERT INTO tbl_rekap_kas (
 ('REC-1789301941852', '2026-09-02', 'Kasir', 0, 8057020, 0, 0, '', 8057020, 2264000, 3994510, 488000, 0, 6746510, 1310510, 1310500, -10, 1, '', '2026-09-13 12:19:01'),
 ('REC-1789300563188', '2026-09-01', 'Kasir', 0, 9387520, 0, 0, '', 9387520, 544500, 7100020, 585000, 75000, 8304520, 1083000, 1083000, 0, 1, '', '2026-09-13 11:56:03');
 
--- C. Data Isian Rincian Biaya Operasional Kas (Total: 32 Rincian Bon)
+-- C. Data Isian Rincian Biaya Operasional Kas (Total: 34 Rincian Bon)
 INSERT INTO tbl_rincian_pengeluaran (rekap_kas_id, keterangan, nominal) VALUES
+('REC-20261006-7866', 'TALITIS', 40000),
 ('REC-20261004-3714', 'Operasional', 1150000),
 ('REC-20261003-8456', 'Operasional', 20000),
 ('REC-20261001-9643', 'Operasional', 190000),
@@ -167,6 +169,7 @@ INSERT INTO tbl_rincian_pengeluaran (rekap_kas_id, keterangan, nominal) VALUES
 ('REC-20260929-9983', 'Operasional', 144000),
 ('REC-20260928-9465', 'Operasional', 78000),
 ('REC-20260926-9937', 'Operasional', 41500),
+('REC-20260925-5992', 'TALITIS', 40000),
 ('REC-1791239697215', 'Bensin', 20000),
 ('REC-1789996551365', 'Peralatan', 1126500),
 ('REC-1789996551365', 'Bayar Listrik September', 2100000),

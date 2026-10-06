@@ -6,7 +6,7 @@
 var BUNDLED_KAS_DATABASE = {
   "appName": "Monitor Kas Kecil Bengkel",
   "version": "1.0.0",
-  "lastBackup": "2026-10-06T02:56:50.202Z",
+  "lastBackup": "2026-10-06T11:50:25.686Z",
   "appSettings": {
     "defaultKasir": "Adis Setiawan",
     "defaultModal": 0,
@@ -254,6 +254,35 @@ var BUNDLED_KAS_DATABASE = {
     }
   ],
   "records": [
+    {
+      "id": "REC-20261006-7866",
+      "tanggal": "2026-10-06",
+      "kasir": "Adis Setiawan",
+      "catatan": "",
+      "saldoAwal": 0,
+      "penjualanShopDrive": 9147030,
+      "penjualanBimaMotor": 400000,
+      "pemasukanLain": 0,
+      "keteranganPemasukanLain": "",
+      "totalPemasukan": 9547030,
+      "transferMandiri": 0,
+      "cardEdc": 8222020,
+      "penghematanTradeIn": 585000,
+      "biayaOperasional": 40000,
+      "totalPengeluaranKas": 8847020,
+      "sisaUangKasKecil": 700010,
+      "fisikRiil": 700000,
+      "selisih": -10,
+      "expenses": [
+        {
+          "id": 1791288323418,
+          "desc": "TALITIS",
+          "amount": 40000
+        }
+      ],
+      "createdAt": "2026-10-06T12:05:47.866Z",
+      "sudahDiambil": false
+    },
     {
       "id": "REC-20261005-1058",
       "tanggal": "2026-10-05",
@@ -542,21 +571,27 @@ var BUNDLED_KAS_DATABASE = {
       "kasir": "Adis Setiawan",
       "catatan": "",
       "saldoAwal": 0,
-      "penjualanShopDrive": 3819000,
-      "penjualanBimaMotor": 0,
+      "penjualanShopDrive": 9147030,
+      "penjualanBimaMotor": 400000,
       "pemasukanLain": 0,
       "keteranganPemasukanLain": "",
-      "totalPemasukan": 3819000,
-      "transferMandiri": 358000,
-      "cardEdc": 2934500,
-      "penghematanTradeIn": 0,
-      "biayaOperasional": 0,
-      "totalPengeluaranKas": 3292500,
-      "sisaUangKasKecil": 526500,
-      "fisikRiil": 526500,
-      "selisih": 0,
-      "expenses": [],
-      "createdAt": "2026-10-05T23:35:45.992Z",
+      "totalPemasukan": 9547030,
+      "transferMandiri": 0,
+      "cardEdc": 8222020,
+      "penghematanTradeIn": 585000,
+      "biayaOperasional": 40000,
+      "totalPengeluaranKas": 8847020,
+      "sisaUangKasKecil": 700010,
+      "fisikRiil": 700000,
+      "selisih": -10,
+      "expenses": [
+        {
+          "id": 1791288124036,
+          "desc": "TALITIS",
+          "amount": 40000
+        }
+      ],
+      "createdAt": "2026-10-06T12:04:15.322Z",
       "sudahDiambil": true
     },
     {
