@@ -32,18 +32,34 @@ Aplikasi Web modern & responsif untuk sistem pencatatan, kalkulasi otomatis, dan
 
 ---
 
-## 💾 Manajemen Database
+## 💾 Manajemen Database & Format SQL
 
-1. **Pusat Database di Browser**:
+1. **File Dump SQL Repository (`database_kas_bengkel.sql`)**:
+   - Seluruh data kas harian, rincian biaya operasional, transaksi rekening bank Mandiri, serta konfigurasi sistem telah tersedia dalam format SQL standar (`MySQL / MariaDB / PostgreSQL / SQLite`).
+   - Struktur skema mencakup:
+     - `tbl_rekap_kas`: Pencatatan kas harian, omset tunai/non-tunai, dan status fisik laci.
+     - `tbl_rincian_pengeluaran`: Relasi bon pengeluaran operasional per kasir.
+     - `tbl_transaksi_bank`: Buku besar rekening Mandiri (restok barang & penarikan).
+     - `tbl_pengaturan_sistem`: Konfigurasi nama toko, PIN owner, dan saldo rekening.
+     - View laporan: `v_ringkasan_kas_harian`, `v_rekap_bulanan`, dan `v_monitoring_rekening_mandiri`.
+   - Untuk memperbarui file SQL sewaktu-waktu dari data terbaru, jalankan:
+     ```bash
+     npm run export:sql
+     # atau
+     node export_sql.js
+     ```
+
+2. **Pusat Database di Browser**:
    - Klik tombol **Database** di header aplikasi untuk melihat statistik database, melakukan **Cadangkan (.json / .sql)** atau **Pulihkan (Restore)** data.
-2. **Server Backend Database (Opsional)**:
-   - Klik ganda file \`start-server.bat\` (atau jalankan \`node server.js\`) untuk mengaktifkan REST API database server lokal di port 3000 (\`http://localhost:3000\`).
+
+3. **Server Backend Database (Opsional)**:
+   - Klik ganda file `start-server.bat` (atau jalankan `node server.js`) untuk mengaktifkan REST API database server lokal di port 3000 (`http://localhost:3000`).
 
 ---
 
 ## 🚀 Cara Penggunaan
 
-1. Buka file \`index.html\` langsung di web browser (Google Chrome, Microsoft Edge, Mozilla Firefox).
+1. Buka file `index.html` langsung di web browser (Google Chrome, Microsoft Edge, Mozilla Firefox).
 2. Masukkan tanggal, shift, dan saldo awal modal kasir.
 3. Input nominal Penjualan Shop & Drive, Bima Motor, dan Sumber Pemasukan Lain (beserta keterangannya).
 4. Input potongan non-tunai (Transfer Mandiri, EDC Card, Penghematan/Trade In) dan rincian biaya operasional.

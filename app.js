@@ -922,39 +922,135 @@ function setupDatabaseModal() {
     document.body.removeChild(a);
   });
 
-  // Backup SQL Dump
+  // Backup SQL Dump Lengkap
   btnBackupSql?.addEventListener('click', () => {
     const records = getSavedRecords();
-    let sql = `-- DATABASE DUMP: MONITOR KAS KECIL BENGKEL\n`;
-    sql += `-- Generated At: ${new Date().toISOString()}\n\n`;
-    sql += `CREATE TABLE IF NOT EXISTS tbl_rekap_kas (\n`;
-    sql += `  id VARCHAR(50) PRIMARY KEY,\n`;
-    sql += `  tanggal DATE,\n`;
-    sql += `  kasir VARCHAR(100),\n`;
-    sql += `  saldo_awal BIGINT,\n`;
-    sql += `  penjualan_shop_drive BIGINT,\n`;
-    sql += `  penjualan_bima_motor BIGINT,\n`;
-    sql += `  pemasukan_lain BIGINT,\n`;
-    sql += `  keterangan_pemasukan_lain TEXT,\n`;
-    sql += `  total_pemasukan BIGINT,\n`;
-    sql += `  transfer_mandiri BIGINT,\n`;
-    sql += `  card_edc BIGINT,\n`;
-    sql += `  penghematan_trade_in BIGINT,\n`;
-    sql += `  biaya_operasional BIGINT,\n`;
-    sql += `  total_pengeluaran_kas BIGINT,\n`;
-    sql += `  sisa_uang_kas_kecil BIGINT,\n`;
-    sql += `  fisik_riil BIGINT,\n`;
-    sql += `  selisih BIGINT,\n`;
-    sql += `  catatan TEXT,\n`;
-    sql += `  created_at TIMESTAMP\n`;
-    sql += `);\n\n`;
+    let bankTxs = [];
+    try {
+      const rawBank = localStorage.getItem('bank_mandiri_transactions_v1');
+      if (rawBank) bankTxs = JSON.parse(rawBank);
+    } catch (e) {
+      bankTxs = [];
+    }
 
-    records.forEach(r => {
-      const catEscaped = (r.catatan || '').replace(/'/g, "''");
-      const kasirEscaped = (r.kasir || '').replace(/'/g, "''");
-      const ketLainEscaped = (r.keteranganPemasukanLain || '').replace(/'/g, "''");
-      sql += `INSERT INTO tbl_rekap_kas VALUES ('${r.id}', '${r.tanggal}', '${kasirEscaped}', ${r.saldoAwal || 0}, ${r.penjualanShopDrive || 0}, ${r.penjualanBimaMotor || 0}, ${r.pemasukanLain || 0}, '${ketLainEscaped}', ${r.totalPemasukan || 0}, ${r.transferMandiri || 0}, ${r.cardEdc || 0}, ${r.penghematanTradeIn || 0}, ${r.biayaOperasional || 0}, ${r.totalPengeluaranKas || 0}, ${r.sisaUangKasKecil || 0}, ${r.fisikRiil || 0}, ${r.selisih || 0}, '${catEscaped}', '${r.createdAt || new Date().toISOString()}');\n`;
-    });
+    const nowIso = new Date().toISOString();
+    let sql = `-- ============================================================================\n`;
+    sql += `-- DATABASE DUMP & SCHEMA: MONITOR KAS KECIL BENGKEL\n`;
+    sql += `-- Unit: Shop & Drive & Bima Motor / PT DUTARAYA BERJAYA\n`;
+    sql += `-- Generated At: ${nowIso}\n`;
+    sql += `-- ============================================================================\n\n`;
+    sql += `CREATE DATABASE IF NOT EXISTS db_kas_bengkel DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;\n`;
+    sql += `USE db_kas_bengkel;\n\n`;
+    sql += `SET FOREIGN_KEY_CHECKS = 0;\n\n`;
+
+    sql += `-- TABEL 1: tbl_rekap_kas\n`;
+    sql += `DROP TABLE IF EXISTS tbl_rekap_kas;\n`;
+    sql += `CREATE TABLE tbl_rekap_kas (\n`;
+    sql += `  id VARCHAR(50) NOT NULL PRIMARY KEY,\n`;
+    sql += `  tanggal DATE NOT NULL,\n`;
+    sql += `  kasir VARCHAR(100) NOT NULL,\n`;
+    sql += `  saldo_awal DECIMAL(15, 2) NOT NULL DEFAULT 0.00,\n`;
+    sql += `  penjualan_shop_drive DECIMAL(15, 2) NOT NULL DEFAULT 0.00,\n`;
+    sql += `  penjualan_bima_motor DECIMAL(15, 2) NOT NULL DEFAULT 0.00,\n`;
+    sql += `  pemasukan_lain DECIMAL(15, 2) NOT NULL DEFAULT 0.00,\n`;
+    sql += `  keterangan_pemasukan_lain TEXT DEFAULT NULL,\n`;
+    sql += `  total_pemasukan DECIMAL(15, 2) NOT NULL DEFAULT 0.00,\n`;
+    sql += `  transfer_mandiri DECIMAL(15, 2) NOT NULL DEFAULT 0.00,\n`;
+    sql += `  card_edc DECIMAL(15, 2) NOT NULL DEFAULT 0.00,\n`;
+    sql += `  penghematan_trade_in DECIMAL(15, 2) NOT NULL DEFAULT 0.00,\n`;
+    sql += `  biaya_operasional DECIMAL(15, 2) NOT NULL DEFAULT 0.00,\n`;
+    sql += `  total_pengeluaran_kas DECIMAL(15, 2) NOT NULL DEFAULT 0.00,\n`;
+    sql += `  sisa_uang_kas_kecil DECIMAL(15, 2) NOT NULL DEFAULT 0.00,\n`;
+    sql += `  fisik_riil DECIMAL(15, 2) NOT NULL DEFAULT 0.00,\n`;
+    sql += `  selisih DECIMAL(15, 2) NOT NULL DEFAULT 0.00,\n`;
+    sql += `  sudah_diambil TINYINT(1) NOT NULL DEFAULT 0,\n`;
+    sql += `  catatan TEXT DEFAULT NULL,\n`;
+    sql += `  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\n`;
+    sql += `  INDEX idx_tanggal (tanggal),\n`;
+    sql += `  INDEX idx_kasir (kasir)\n`;
+    sql += `) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;\n\n`;
+
+    sql += `-- TABEL 2: tbl_rincian_pengeluaran\n`;
+    sql += `DROP TABLE IF EXISTS tbl_rincian_pengeluaran;\n`;
+    sql += `CREATE TABLE tbl_rincian_pengeluaran (\n`;
+    sql += `  id BIGINT AUTO_INCREMENT PRIMARY KEY,\n`;
+    sql += `  rekap_kas_id VARCHAR(50) NOT NULL,\n`;
+    sql += `  keterangan VARCHAR(255) NOT NULL,\n`;
+    sql += `  nominal DECIMAL(15, 2) NOT NULL DEFAULT 0.00,\n`;
+    sql += `  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\n`;
+    sql += `  INDEX idx_rekap_id (rekap_kas_id),\n`;
+    sql += `  CONSTRAINT fk_rincian_rekap_kas FOREIGN KEY (rekap_kas_id) REFERENCES tbl_rekap_kas (id) ON DELETE CASCADE ON UPDATE CASCADE\n`;
+    sql += `) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;\n\n`;
+
+    sql += `-- TABEL 3: tbl_transaksi_bank\n`;
+    sql += `DROP TABLE IF EXISTS tbl_transaksi_bank;\n`;
+    sql += `CREATE TABLE tbl_transaksi_bank (\n`;
+    sql += `  id VARCHAR(50) NOT NULL PRIMARY KEY,\n`;
+    sql += `  type ENUM('restok', 'penarikan', 'inflow') NOT NULL,\n`;
+    sql += `  tanggal DATE NOT NULL,\n`;
+    sql += `  supplier VARCHAR(150) DEFAULT NULL,\n`;
+    sql += `  kategori VARCHAR(100) DEFAULT NULL,\n`;
+    sql += `  nota VARCHAR(100) DEFAULT NULL,\n`;
+    sql += `  nama VARCHAR(150) DEFAULT NULL,\n`;
+    sql += `  keterangan TEXT DEFAULT NULL,\n`;
+    sql += `  penerima VARCHAR(150) DEFAULT NULL,\n`;
+    sql += `  nominal DECIMAL(15, 2) NOT NULL DEFAULT 0.00,\n`;
+    sql += `  status_owner ENUM('approved', 'pending', 'rejected') NOT NULL DEFAULT 'pending',\n`;
+    sql += `  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\n`;
+    sql += `  INDEX idx_bank_tanggal (tanggal)\n`;
+    sql += `) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;\n\n`;
+
+    sql += `-- TABEL 4: tbl_pengaturan_sistem\n`;
+    sql += `DROP TABLE IF EXISTS tbl_pengaturan_sistem;\n`;
+    sql += `CREATE TABLE tbl_pengaturan_sistem (\n`;
+    sql += `  setting_key VARCHAR(50) NOT NULL PRIMARY KEY,\n`;
+    sql += `  setting_value TEXT NOT NULL,\n`;
+    sql += `  deskripsi VARCHAR(255) DEFAULT NULL\n`;
+    sql += `) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;\n\n`;
+
+    sql += `-- DATA: PENGATURAN SISTEM\n`;
+    sql += `INSERT INTO tbl_pengaturan_sistem (setting_key, setting_value, deskripsi) VALUES\n`;
+    sql += `('bengkel_name', 'Shop & Drive & Bima Motor', 'Nama bengkel'),\n`;
+    sql += `('rekening_mandiri_name', 'Rekening Mandiri PT DUTARAYA BERJAYA', 'Nama rekening'),\n`;
+    sql += `('pin_owner', '2209', 'PIN verifikasi owner');\n\n`;
+
+    let allExpenses = [];
+    if (records.length > 0) {
+      sql += `-- DATA: REKAP KAS HARIAN\n`;
+      sql += `INSERT INTO tbl_rekap_kas (id, tanggal, kasir, saldo_awal, penjualan_shop_drive, penjualan_bima_motor, pemasukan_lain, keterangan_pemasukan_lain, total_pemasukan, transfer_mandiri, card_edc, penghematan_trade_in, biaya_operasional, total_pengeluaran_kas, sisa_uang_kas_kecil, fisik_riil, selisih, sudah_diambil, catatan, created_at) VALUES\n`;
+      const rows = records.map(r => {
+        if (r.expenses && Array.isArray(r.expenses)) {
+          r.expenses.forEach(x => {
+            allExpenses.push({ rekapId: r.id, desc: x.desc || x.keterangan || '-', amount: x.amount || x.nominal || 0 });
+          });
+        }
+        const cDate = r.createdAt ? r.createdAt.replace('T', ' ').replace(/\.\d+Z$/, '') : nowIso.replace('T', ' ').slice(0, 19);
+        return `('${r.id}', '${r.tanggal}', '${(r.kasir || '').replace(/'/g, "''")}', ${r.saldoAwal || 0}, ${r.penjualanShopDrive || 0}, ${r.penjualanBimaMotor || 0}, ${r.pemasukanLain || 0}, '${(r.keteranganPemasukanLain || '').replace(/'/g, "''")}', ${r.totalPemasukan || 0}, ${r.transferMandiri || 0}, ${r.cardEdc || 0}, ${r.penghematanTradeIn || 0}, ${r.biayaOperasional || 0}, ${r.totalPengeluaranKas || 0}, ${r.sisaUangKasKecil || 0}, ${r.fisikRiil || 0}, ${r.selisih || 0}, ${r.sudahDiambil ? 1 : 0}, '${(r.catatan || '').replace(/'/g, "''")}', '${cDate}')`;
+      });
+      sql += rows.join(',\n') + ';\n\n';
+    }
+
+    if (allExpenses.length > 0) {
+      sql += `-- DATA: RINCIAN PENGELUARAN OPERASIONAL\n`;
+      sql += `INSERT INTO tbl_rincian_pengeluaran (rekap_kas_id, keterangan, nominal) VALUES\n`;
+      sql += allExpenses.map(e => `('${e.rekapId}', '${e.desc.replace(/'/g, "''")}', ${Number(e.amount) || 0})`).join(',\n') + ';\n\n';
+    }
+
+    if (bankTxs.length > 0) {
+      sql += `-- DATA: TRANSAKSI BANK MANDIRI & RESTOK\n`;
+      sql += `INSERT INTO tbl_transaksi_bank (id, type, tanggal, supplier, kategori, nota, nama, keterangan, penerima, nominal, status_owner) VALUES\n`;
+      sql += bankTxs.map(t => {
+        const sup = t.supplier ? `'${t.supplier.replace(/'/g, "''")}'` : 'NULL';
+        const kat = t.kategori ? `'${t.kategori.replace(/'/g, "''")}'` : 'NULL';
+        const nota = t.nota ? `'${t.nota.replace(/'/g, "''")}'` : 'NULL';
+        const nm = t.nama ? `'${t.nama.replace(/'/g, "''")}'` : 'NULL';
+        const ket = t.keterangan ? `'${t.keterangan.replace(/'/g, "''")}'` : 'NULL';
+        const pen = t.penerima ? `'${t.penerima.replace(/'/g, "''")}'` : 'NULL';
+        return `('${t.id}', '${t.type}', '${t.tanggal}', ${sup}, ${kat}, ${nota}, ${nm}, ${ket}, ${pen}, ${Number(t.nominal) || 0}, '${t.statusOwner || 'approved'}')`;
+      }).join(',\n') + ';\n\n';
+    }
+
+    sql += `SET FOREIGN_KEY_CHECKS = 1;\n`;
 
     const blob = new Blob([sql], { type: 'text/sql' });
     const url = URL.createObjectURL(blob);

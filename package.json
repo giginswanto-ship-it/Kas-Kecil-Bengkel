@@ -4,9 +4,10 @@
   "description": "Sistem Database & Monitoring Kas Kecil Bengkel Shop & Drive dan Bima Motor",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "export:sql": "node export_sql.js"
   },
-  "keywords": ["kasir", "kas-kecil", "bengkel", "database"],
+  "keywords": ["kasir", "kas-kecil", "bengkel", "database", "sql"],
   "author": "Shop & Drive / Bima Motor",
   "license": "MIT"
 }
