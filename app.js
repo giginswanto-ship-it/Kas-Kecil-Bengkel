@@ -1800,7 +1800,7 @@ const OWNER_AUTH_SESSION_KEY = 'owner_pin_auth_session';
 
 let pendingOwnerPinAction = null;
 
-function openOwnerPinModal(callback, title = 'Akses Khusus Owner', subtitle = 'Rekening Mandiri & Restok', desc = 'Halaman ini dilindungi. Masukkan PIN keamanan Owner untuk melanjutkan:') {
+function openOwnerPinModal(callback, title = 'Akses Khusus Owner', subtitle = 'Rekening Mandiri - PT DUTARAYA BERJAYA', desc = 'Halaman ini dilindungi. Masukkan PIN keamanan Owner untuk melanjutkan:') {
   const modal = document.getElementById('ownerPinModal');
   const inputPin = document.getElementById('inputOwnerPin');
   const errEl = document.getElementById('ownerPinError');
@@ -1877,15 +1877,15 @@ function setupOwnerPinModal() {
   }
 
   btnNav?.addEventListener('click', () => {
-    // Tombol Rekening Mandiri & Restok HANYA UNTUK OWNER (Wajib verifikasi PIN 2209)
+    // Tombol Rekening Mandiri PT DUTARAYA BERJAYA (Khusus Owner PIN 2209)
     openOwnerPinModal(
       () => {
         sessionStorage.setItem(OWNER_AUTH_SESSION_KEY, OWNER_SECURITY_PIN);
         window.location.href = 'monitoring-bank.html';
       },
       'Akses Khusus Owner',
-      'Rekening Mandiri & Restok',
-      'Tombol Rekening Mandiri & Restok hanya untuk Owner. Masukkan PIN keamanan Owner (2209) untuk melanjutkan:'
+      'Rekening Mandiri - PT DUTARAYA BERJAYA',
+      'Tombol Rekening Mandiri PT DUTARAYA BERJAYA hanya untuk Owner. Masukkan PIN keamanan Owner (2209) untuk membuka:'
     );
   });
 
