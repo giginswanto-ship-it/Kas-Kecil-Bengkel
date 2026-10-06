@@ -1995,7 +1995,13 @@ function setupOwnerPinModal() {
     }
   }
 
-  btnNav?.addEventListener('click', () => {
+  btnNav?.addEventListener('click', (e) => {
+    // Jika sesi Owner sudah aktif, langsung arahkan ke monitoring-bank.html
+    if (sessionStorage.getItem(OWNER_AUTH_SESSION_KEY) === OWNER_SECURITY_PIN) {
+      window.location.href = 'monitoring-bank.html';
+      return;
+    }
+    if (e) e.preventDefault();
     // Tombol Rekening Mandiri PT DUTARAYA BERJAYA (Khusus Owner PIN 2209)
     openOwnerPinModal(
       () => {
