@@ -52,37 +52,37 @@
         </a>
 
         <!-- Lock / Logout Owner Button -->
-        <button type="button" id="btnLockOwnerSession" class="bg-rose-900/80 hover:bg-rose-800 text-rose-200 hover:text-white px-3 py-2 rounded-xl font-bold transition flex items-center gap-1.5 shadow-sm border border-rose-700/50" title="Kunci Akses Owner & Logout">
+        <button type="button" id="btnLockOwnerSession" onclick="lockOwnerSession()" class="bg-rose-900/80 hover:bg-rose-800 text-rose-200 hover:text-white px-3 py-2 rounded-xl font-bold transition flex items-center gap-1.5 shadow-sm border border-rose-700/50" title="Kunci Akses Owner & Logout">
           <i class="fa-solid fa-lock text-rose-300"></i>
           <span class="hidden sm:inline">Kunci Akses</span>
         </button>
 
         <!-- Tambah Restok Bahan Button -->
-        <button id="btnOpenRestokModal" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-3.5 py-2 rounded-xl font-black transition flex items-center gap-1.5 shadow-md shadow-emerald-950/30 border border-emerald-400/30">
+        <button id="btnOpenRestokModal" onclick="openAddRestokModal()" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-3.5 py-2 rounded-xl font-black transition flex items-center gap-1.5 shadow-md shadow-emerald-950/30 border border-emerald-400/30">
           <i class="fa-solid fa-cart-plus text-amber-300"></i>
           <span>+ Restok Bahan</span>
         </button>
 
         <!-- Tambah Penarikan Button -->
-        <button id="btnOpenPenarikanModal" class="bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white px-3.5 py-2 rounded-xl font-black transition flex items-center gap-1.5 shadow-md shadow-rose-950/30 border border-rose-400/30">
+        <button id="btnOpenPenarikanModal" onclick="openAddPenarikanModal()" class="bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white px-3.5 py-2 rounded-xl font-black transition flex items-center gap-1.5 shadow-md shadow-rose-950/30 border border-rose-400/30">
           <i class="fa-solid fa-hand-holding-dollar text-amber-300"></i>
           <span>+ Penarikan Lain</span>
         </button>
 
         <!-- Settings Button -->
-        <button id="btnOpenBankSettings" class="bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white px-3 py-2 rounded-xl font-bold transition flex items-center gap-1.5 shadow-sm border border-slate-700">
+        <button id="btnOpenBankSettings" onclick="openBankSettingsModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white px-3 py-2 rounded-xl font-bold transition flex items-center gap-1.5 shadow-sm border border-slate-700">
           <i class="fa-solid fa-gear text-amber-300"></i>
           <span class="hidden sm:inline">Pengaturan</span>
         </button>
 
         <!-- Ekspor Excel Button -->
-        <button id="btnExportBankExcel" class="bg-emerald-700 hover:bg-emerald-600 text-white px-3.5 py-2 rounded-xl font-bold transition flex items-center gap-1.5 shadow-md">
+        <button id="btnExportBankExcel" onclick="exportBankToExcelCSV()" class="bg-emerald-700 hover:bg-emerald-600 text-white px-3.5 py-2 rounded-xl font-bold transition flex items-center gap-1.5 shadow-md">
           <i class="fa-solid fa-file-excel"></i>
           <span class="hidden sm:inline">Ekspor Excel</span>
         </button>
 
         <!-- Unduh PDF / Cetak Button -->
-        <button id="btnDownloadBankPdf" class="bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-600 hover:to-indigo-600 text-white px-3.5 py-2 rounded-xl font-bold transition flex items-center gap-1.5 shadow-md shadow-indigo-950/30 border border-indigo-500/30">
+        <button id="btnDownloadBankPdf" onclick="downloadBankReportAsPdf()" class="bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-600 hover:to-indigo-600 text-white px-3.5 py-2 rounded-xl font-bold transition flex items-center gap-1.5 shadow-md shadow-indigo-950/30 border border-indigo-500/30">
           <i class="fa-solid fa-file-pdf text-amber-300"></i>
           <span>PDF / Cetak</span>
         </button>
@@ -113,16 +113,16 @@
           </span>
         </div>
         
-        <div class="text-3xl sm:text-4xl font-black text-amber-300 tracking-tight my-2" id="cardPerkiraanSaldoBank">Rp 0</div>
+        <div class="text-3xl sm:text-4xl font-black text-amber-300 tracking-tight my-2" id="cardPerkiraanSaldoBank">Rp 88.135.490</div>
         
         <div class="pt-2 border-t border-white/10 flex flex-wrap items-center justify-between text-xs text-blue-100/90 gap-2">
           <div>
-            Saldo Awal: <span class="font-bold text-white" id="cardSaldoAwalBank">Rp 0</span>
+            Saldo Awal: <span class="font-bold text-white" id="cardSaldoAwalBank">Rp 29.384.422</span>
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-emerald-300 font-bold" id="cardInflowBadge">+Rp 0</span> masuk
+            <span class="text-emerald-300 font-bold" id="cardInflowBadge">+Rp 361.877.710</span> masuk
             <span class="text-slate-400">•</span>
-            <span class="text-rose-300 font-bold" id="cardOutflowBadge">-Rp 0</span> keluar
+            <span class="text-rose-300 font-bold" id="cardOutflowBadge">-Rp 303.126.642</span> keluar
           </div>
         </div>
       </div>
@@ -135,13 +135,13 @@
             <i class="fa-solid fa-money-bill-transfer"></i>
           </span>
         </div>
-        <div class="text-xl sm:text-2xl font-black text-blue-950 tracking-tight" id="cardTotalPenerimaanKasir">Rp 0</div>
+        <div class="text-xl sm:text-2xl font-black text-blue-950 tracking-tight" id="cardTotalPenerimaanKasir">Rp 361.877.710</div>
         <div class="text-[11px] text-slate-500 mt-1 flex flex-col gap-0.5">
           <div class="flex justify-between">
-            <span>Transfer Mandiri:</span> <b class="text-blue-800" id="cardSubTransferMandiri">Rp 0</b>
+            <span>Transfer Mandiri:</span> <b class="text-blue-800" id="cardSubTransferMandiri">Rp 58.741.090</b>
           </div>
           <div class="flex justify-between">
-            <span>Card / EDC:</span> <b class="text-indigo-800" id="cardSubCardEdc">Rp 0</b>
+            <span>Card / EDC:</span> <b class="text-indigo-800" id="cardSubCardEdc">Rp 303.136.620</b>
           </div>
         </div>
       </div>
@@ -154,9 +154,9 @@
             <i class="fa-solid fa-boxes-packing"></i>
           </span>
         </div>
-        <div class="text-xl sm:text-2xl font-black text-teal-900 tracking-tight" id="cardTotalRestokBahan">Rp 0</div>
+        <div class="text-xl sm:text-2xl font-black text-teal-900 tracking-tight" id="cardTotalRestokBahan">Rp 214.088.716</div>
         <div class="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
-          <span id="cardCountRestok">0 Transaksi Restok</span>
+          <span id="cardCountRestok">4 Transaksi Restok</span>
           <span class="text-teal-700 font-bold">Mengurangi Saldo</span>
         </div>
       </div>
@@ -169,10 +169,10 @@
             <i class="fa-solid fa-hand-holding-dollar"></i>
           </span>
         </div>
-        <div class="text-xl sm:text-2xl font-black text-rose-900 tracking-tight" id="cardTotalPenarikanLain">Rp 0</div>
+        <div class="text-xl sm:text-2xl font-black text-rose-900 tracking-tight" id="cardTotalPenarikanLain">Rp 89.037.926</div>
         <div class="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
-          <span id="cardCountPenarikan">0 Penarikan</span>
-          <span id="cardPendingValidationBadge" class="text-amber-700 font-bold">0 Perlu Validasi</span>
+          <span id="cardCountPenarikan">15 Penarikan</span>
+          <span id="cardPendingValidationBadge" class="text-amber-700 font-bold">1 Perlu Validasi</span>
         </div>
       </div>
 
@@ -210,7 +210,7 @@
 
       <!-- Quick Action Buttons -->
       <div class="flex items-center gap-2">
-        <button id="btnSyncFromKasir" class="px-3 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 text-xs font-bold border border-blue-200 transition flex items-center gap-1.5" title="Muat ulang sinkronisasi omset kasir">
+        <button id="btnSyncFromKasir" onclick="syncFromKasirAndDatabase()" class="px-3 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 text-xs font-bold border border-blue-200 transition flex items-center gap-1.5 shadow-sm active:scale-95" title="Muat ulang sinkronisasi omset kasir">
           <i class="fa-solid fa-rotate text-blue-600"></i>
           <span>Sinkron Kasir</span>
         </button>
@@ -222,30 +222,30 @@
       <div class="border-b border-slate-200 bg-slate-50/50 px-4 pt-2 flex items-center justify-between flex-wrap gap-2">
         <div class="flex items-center gap-2 overflow-x-auto">
           <!-- Tab 1: Restok Bahan -->
-          <button id="tabBtnRestok" class="tab-main-btn px-4 py-3 border-b-2 border-teal-600 font-extrabold text-teal-900 text-xs sm:text-sm flex items-center gap-2 transition whitespace-nowrap">
+          <button id="tabBtnRestok" onclick="switchTab('restok')" class="tab-main-btn px-4 py-3 border-b-2 border-teal-600 font-extrabold text-teal-900 text-xs sm:text-sm flex items-center gap-2 transition whitespace-nowrap">
             <span class="w-6 h-6 rounded-lg bg-teal-100 text-teal-800 flex items-center justify-center text-xs">
               <i class="fa-solid fa-boxes-packing"></i>
             </span>
             <span>1. Pengeluaran Restok & Pembelian Bahan</span>
-            <span id="badgeTabRestokCount" class="px-2 py-0.5 rounded-full bg-teal-100 text-teal-800 text-[11px] font-bold">0</span>
+            <span id="badgeTabRestokCount" class="px-2 py-0.5 rounded-full bg-teal-100 text-teal-800 text-[11px] font-bold">4</span>
           </button>
 
           <!-- Tab 2: Penarikan Keperluan Lain -->
-          <button id="tabBtnPenarikan" class="tab-main-btn px-4 py-3 border-b-2 border-transparent font-bold text-slate-500 hover:text-slate-800 text-xs sm:text-sm flex items-center gap-2 transition whitespace-nowrap">
+          <button id="tabBtnPenarikan" onclick="switchTab('penarikan')" class="tab-main-btn px-4 py-3 border-b-2 border-transparent font-bold text-slate-500 hover:text-slate-800 text-xs sm:text-sm flex items-center gap-2 transition whitespace-nowrap">
             <span class="w-6 h-6 rounded-lg bg-rose-100 text-rose-800 flex items-center justify-center text-xs">
               <i class="fa-solid fa-hand-holding-dollar"></i>
             </span>
             <span>2. Penarikan Keperluan Lain</span>
-            <span id="badgeTabPenarikanCount" class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 text-[11px] font-bold">0</span>
+            <span id="badgeTabPenarikanCount" class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 text-[11px] font-bold">15</span>
           </button>
 
           <!-- Tab 3: Pemasukan Kasir (Transfer Mandiri + EDC) -->
-          <button id="tabBtnInflow" class="tab-main-btn px-4 py-3 border-b-2 border-transparent font-bold text-slate-500 hover:text-slate-800 text-xs sm:text-sm flex items-center gap-2 transition whitespace-nowrap">
+          <button id="tabBtnInflow" onclick="switchTab('inflow')" class="tab-main-btn px-4 py-3 border-b-2 border-transparent font-bold text-slate-500 hover:text-slate-800 text-xs sm:text-sm flex items-center gap-2 transition whitespace-nowrap">
             <span class="w-6 h-6 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center text-xs">
               <i class="fa-solid fa-money-bill-transfer"></i>
             </span>
             <span>3. Penerimaan Non-Tunai Kasir (Transfer & EDC)</span>
-            <span id="badgeTabInflowCount" class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[11px] font-bold">0</span>
+            <span id="badgeTabInflowCount" class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[11px] font-bold">36</span>
           </button>
         </div>
 
@@ -266,7 +266,7 @@
             </h2>
             <p class="text-xs text-slate-500">Mencatat pembelian oli, aki, ban, sparepart, dan bahan operasional yang dibayar melalui Rekening Bank Mandiri.</p>
           </div>
-          <button id="btnTambahRestokInline" class="px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+          <button id="btnTambahRestokInline" onclick="openAddRestokModal()" class="px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm active:scale-95">
             <i class="fa-solid fa-plus"></i>
             <span>Tambah Pembelian Bahan</span>
           </button>
@@ -288,10 +288,53 @@
               </tr>
             </thead>
             <tbody id="tableBodyRestok" class="divide-y divide-slate-100 bg-white">
-              <!-- Dynamically rendered -->
+              <tr class="hover:bg-teal-50/50 transition">
+                <td class="py-2.5 px-3 text-center text-slate-400 font-bold">1</td>
+                <td class="py-2.5 px-3 font-semibold text-slate-800 whitespace-nowrap">28 Sep 2026</td>
+                <td class="py-2.5 px-3"><span class="font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">AOP</span></td>
+                <td class="py-2.5 px-3 font-medium text-slate-700">Barang dagangan Shop And Drive</td>
+                <td class="py-2.5 px-3 text-slate-400 italic">-</td>
+                <td class="py-2.5 px-3 text-right font-black text-slate-900">Rp 31.743.686</td>
+                <td class="py-2.5 px-3 text-center"><span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300"><i class="fa-solid fa-circle-check"></i> Disetujui</span></td>
+                <td class="py-2.5 px-3 text-center"><button class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg" onclick="editBankTransaction('RESTOK-1791247927128')"><i class="fa-solid fa-pen-to-square"></i></button></td>
+              </tr>
+              <tr class="hover:bg-teal-50/50 transition">
+                <td class="py-2.5 px-3 text-center text-slate-400 font-bold">2</td>
+                <td class="py-2.5 px-3 font-semibold text-slate-800 whitespace-nowrap">21 Sep 2026</td>
+                <td class="py-2.5 px-3"><span class="font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">AOP</span></td>
+                <td class="py-2.5 px-3 font-medium text-slate-700">Barang dagangan Shop And Drive</td>
+                <td class="py-2.5 px-3 text-slate-400 italic">-</td>
+                <td class="py-2.5 px-3 text-right font-black text-slate-900">Rp 58.324.089</td>
+                <td class="py-2.5 px-3 text-center"><span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300"><i class="fa-solid fa-circle-check"></i> Disetujui</span></td>
+                <td class="py-2.5 px-3 text-center"><button class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg" onclick="editBankTransaction('RESTOK-1789953299477')"><i class="fa-solid fa-pen-to-square"></i></button></td>
+              </tr>
+              <tr class="hover:bg-teal-50/50 transition">
+                <td class="py-2.5 px-3 text-center text-slate-400 font-bold">3</td>
+                <td class="py-2.5 px-3 font-semibold text-slate-800 whitespace-nowrap">14 Sep 2026</td>
+                <td class="py-2.5 px-3"><span class="font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">AOP</span></td>
+                <td class="py-2.5 px-3 font-medium text-slate-700">Barang dagangan Shop & Drive</td>
+                <td class="py-2.5 px-3 text-slate-400 italic">-</td>
+                <td class="py-2.5 px-3 text-right font-black text-slate-900">Rp 66.297.436</td>
+                <td class="py-2.5 px-3 text-center"><span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300"><i class="fa-solid fa-circle-check"></i> Disetujui</span></td>
+                <td class="py-2.5 px-3 text-center"><button class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg" onclick="editBankTransaction('RESTOK-1789953644394')"><i class="fa-solid fa-pen-to-square"></i></button></td>
+              </tr>
+              <tr class="hover:bg-teal-50/50 transition">
+                <td class="py-2.5 px-3 text-center text-slate-400 font-bold">4</td>
+                <td class="py-2.5 px-3 font-semibold text-slate-800 whitespace-nowrap">06 Sep 2026</td>
+                <td class="py-2.5 px-3"><span class="font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">AOP</span></td>
+                <td class="py-2.5 px-3 font-medium text-slate-700">Belanja Barang Dagangan</td>
+                <td class="py-2.5 px-3 text-slate-400 italic">-</td>
+                <td class="py-2.5 px-3 text-right font-black text-slate-900">Rp 57.723.505</td>
+                <td class="py-2.5 px-3 text-center"><span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300"><i class="fa-solid fa-circle-check"></i> Disetujui</span></td>
+                <td class="py-2.5 px-3 text-center"><button class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg" onclick="editBankTransaction('RESTOK-1789956528819')"><i class="fa-solid fa-pen-to-square"></i></button></td>
+              </tr>
             </tbody>
             <tfoot id="tableFootRestok" class="bg-teal-50/80 font-black text-teal-950 border-t-2 border-teal-200">
-              <!-- Dynamically rendered grand total -->
+              <tr>
+                <td colspan="5" class="py-3 px-3 text-right uppercase tracking-wider text-xs">Total Restok Bahan:</td>
+                <td class="py-3 px-3 text-right text-sm font-black text-teal-950">Rp 214.088.716</td>
+                <td colspan="2" class="py-3 px-3 text-center text-[11px] text-teal-700">4 Transaksi</td>
+              </tr>
             </tfoot>
           </table>
         </div>
@@ -299,7 +342,7 @@
         <div id="emptyRestokNotice" class="hidden text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
           <i class="fa-solid fa-boxes-packing text-3xl text-slate-300 mb-2"></i>
           <p class="text-xs text-slate-500 font-medium">Belum ada data pembelian bahan untuk filter ini.</p>
-          <button id="btnTambahRestokEmpty" class="mt-3 px-3 py-1.5 rounded-lg bg-teal-600 text-white text-xs font-bold hover:bg-teal-700 transition">
+          <button id="btnTambahRestokEmpty" onclick="openAddRestokModal()" class="mt-3 px-3 py-1.5 rounded-lg bg-teal-600 text-white text-xs font-bold hover:bg-teal-700 transition">
             + Tambah Pembelian Pertama
           </button>
         </div>
@@ -315,7 +358,7 @@
             </h2>
             <p class="text-xs text-slate-500">Mencatat prive owner, gaji/bonus, sewa, tagihan listrik, pajak, biaya admin bank, atau pengeluaran mendesak lainnya.</p>
           </div>
-          <button id="btnTambahPenarikanInline" class="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+          <button id="btnTambahPenarikanInline" onclick="openAddPenarikanModal()" class="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm active:scale-95">
             <i class="fa-solid fa-plus"></i>
             <span>Tambah Penarikan Lain</span>
           </button>
@@ -348,7 +391,7 @@
         <div id="emptyPenarikanNotice" class="hidden text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
           <i class="fa-solid fa-money-bill-wave text-3xl text-slate-300 mb-2"></i>
           <p class="text-xs text-slate-500 font-medium">Belum ada data penarikan untuk filter ini.</p>
-          <button id="btnTambahPenarikanEmpty" class="mt-3 px-3 py-1.5 rounded-lg bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition">
+          <button id="btnTambahPenarikanEmpty" onclick="openAddPenarikanModal()" class="mt-3 px-3 py-1.5 rounded-lg bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition">
             + Tambah Penarikan Pertama
           </button>
         </div>
@@ -420,17 +463,17 @@
 
         <div class="bg-white/10 rounded-xl p-3 border border-white/10 text-center">
           <div class="text-[11px] text-blue-200 uppercase font-bold">Total Inflow Bank</div>
-          <div class="text-base font-black text-emerald-400" id="summaryTotalInflow">Rp 0</div>
+          <div class="text-base font-black text-emerald-400" id="summaryTotalInflow">+Rp 361.877.710</div>
         </div>
 
         <div class="bg-white/10 rounded-xl p-3 border border-white/10 text-center">
           <div class="text-[11px] text-blue-200 uppercase font-bold">Total Outflow Bank</div>
-          <div class="text-base font-black text-rose-400" id="summaryTotalOutflow">Rp 0</div>
+          <div class="text-base font-black text-rose-400" id="summaryTotalOutflow">-Rp 303.126.642</div>
         </div>
 
         <div class="bg-amber-400/20 rounded-xl p-3 border border-amber-400/40 text-center">
           <div class="text-[11px] text-amber-300 uppercase font-black">Perkiraan Saldo Akhir</div>
-          <div class="text-lg font-black text-amber-300" id="summaryPerkiraanSaldo">Rp 0</div>
+          <div class="text-lg font-black text-amber-300" id="summaryPerkiraanSaldo">Rp 88.135.490</div>
         </div>
       </div>
     </div>
@@ -467,7 +510,7 @@
             <p class="text-xs text-teal-200">Mengurangi Saldo Rekening Bank Mandiri</p>
           </div>
         </div>
-        <button type="button" class="btn-close-modal text-slate-300 hover:text-white text-lg p-1" data-modal="modalRestok">
+        <button type="button" class="btn-close-modal text-slate-300 hover:text-white text-lg p-1" data-modal="modalRestok" onclick="closeModal('modalRestok')">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
@@ -556,7 +599,7 @@
         </div>
 
         <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
-          <button type="button" class="btn-close-modal px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition" data-modal="modalRestok">
+          <button type="button" class="btn-close-modal px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition" data-modal="modalRestok" onclick="closeModal('modalRestok')">
             Batal
           </button>
           <button type="submit" class="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-black transition flex items-center gap-1.5 shadow-md shadow-teal-700/20">
@@ -581,7 +624,7 @@
             <p class="text-xs text-rose-200">Mengurangi Saldo Rekening Bank Mandiri</p>
           </div>
         </div>
-        <button type="button" class="btn-close-modal text-slate-300 hover:text-white text-lg p-1" data-modal="modalPenarikan">
+        <button type="button" class="btn-close-modal text-slate-300 hover:text-white text-lg p-1" data-modal="modalPenarikan" onclick="closeModal('modalPenarikan')">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
@@ -658,7 +701,7 @@
         </div>
 
         <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
-          <button type="button" class="btn-close-modal px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition" data-modal="modalPenarikan">
+          <button type="button" class="btn-close-modal px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition" data-modal="modalPenarikan" onclick="closeModal('modalPenarikan')">
             Batal
           </button>
           <button type="submit" class="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-black transition flex items-center gap-1.5 shadow-md shadow-rose-700/20">
@@ -683,7 +726,7 @@
             <p class="text-xs text-blue-200">Konfigurasi Saldo Awal & Parameter</p>
           </div>
         </div>
-        <button type="button" class="btn-close-modal text-slate-300 hover:text-white text-lg p-1" data-modal="modalBankSettings">
+        <button type="button" class="btn-close-modal text-slate-300 hover:text-white text-lg p-1" data-modal="modalBankSettings" onclick="closeModal('modalBankSettings')">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
@@ -721,10 +764,10 @@
         </div>
 
         <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
-          <button type="button" class="btn-close-modal px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition" data-modal="modalBankSettings">
+          <button type="button" class="btn-close-modal px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition" data-modal="modalBankSettings" onclick="closeModal('modalBankSettings')">
             Tutup
           </button>
-          <button type="button" id="btnSaveBankSettings" class="px-5 py-2 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-xs font-black transition flex items-center gap-1.5 shadow-md">
+          <button type="button" id="btnSaveBankSettings" onclick="saveBankSettingsFromModal()" class="px-5 py-2 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-xs font-black transition flex items-center gap-1.5 shadow-md">
             <i class="fa-solid fa-floppy-disk"></i>
             <span>Simpan Pengaturan</span>
           </button>
@@ -745,7 +788,7 @@
             <h3 class="font-extrabold text-sm">Verifikasi & Validasi Owner</h3>
           </div>
         </div>
-        <button type="button" class="btn-close-modal text-slate-300 hover:text-white text-lg p-1" data-modal="modalOwnerValidation">
+        <button type="button" class="btn-close-modal text-slate-300 hover:text-white text-lg p-1" data-modal="modalOwnerValidation" onclick="closeModal('modalOwnerValidation')">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
@@ -767,10 +810,10 @@
         </div>
 
         <div class="pt-2 flex items-center justify-between gap-2">
-          <button type="button" id="btnRejectByOwner" class="flex-1 py-2 px-3 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-800 font-bold transition flex items-center justify-center gap-1">
+          <button type="button" id="btnRejectByOwner" onclick="processOwnerValidation('rejected')" class="flex-1 py-2 px-3 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-800 font-bold transition flex items-center justify-center gap-1">
             <i class="fa-solid fa-xmark"></i> Tolak
           </button>
-          <button type="button" id="btnApproveByOwner" class="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold transition flex items-center justify-center gap-1 shadow-md shadow-emerald-700/20">
+          <button type="button" id="btnApproveByOwner" onclick="processOwnerValidation('approved')" class="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold transition flex items-center justify-center gap-1 shadow-md shadow-emerald-700/20">
             <i class="fa-solid fa-check"></i> Setujui (Approve)
           </button>
         </div>
@@ -949,10 +992,7 @@
   </div>
 
   <!-- Scripts -->
-  <script src="data-seed.js"></script>
-    <script>
-    window.BUNDLED_KAS_DATABASE = {"appName":"Monitor Kas Kecil Bengkel","version":"1.0.0","lastBackup":"2026-10-06T02:56:50.202Z","appSettings":{"defaultKasir":"Adis Setiawan","defaultModal":0,"bengkelName":"Shop & Drive & Bima Motor","pinOwner":"2209"},"bankSettings":{"saldoAwal":29384422,"saldoBulanLalu":29384422,"accountName":"Bank Mandiri - 1560023250204","ownerName":"PT DUTARAYA BERJAYA"},"bankTransactions":[{"id":"TARIK-1791248415217","type":"penarikan","tanggal":"2026-10-02","kategori":"Prive / Bagi Hasil Owner","keterangan":"Prive Mingguan","penerima":"Bp Swanto mandiri","nominal":4500000,"statusOwner":"approved","updatedAt":"2026-10-06T01:00:15.217Z","createdAt":"2026-10-06T01:00:15.217Z"},{"id":"TARIK-1791248372626","type":"penarikan","tanggal":"2026-10-01","kategori":"Gaji & Insentif Karyawan","keterangan":"Insentip Fera Pajak","penerima":"BCA Fera Ferdianti","nominal":1500000,"statusOwner":"approved","updatedAt":"2026-10-06T00:59:32.627Z","createdAt":"2026-10-06T00:59:32.627Z"},{"id":"TARIK-1791248043056","type":"penarikan","tanggal":"2026-09-30","kategori":"Prive / Bagi Hasil Owner","keterangan":"Pembelian PC Untuk Server","penerima":"BCA Ashabil Syauqi Snaprint GW","nominal":7000000,"statusOwner":"approved","updatedAt":"2026-10-06T00:55:35.600Z","createdAt":"2026-10-06T00:54:03.057Z"},{"id":"RESTOK-1791247927128","type":"restok","tanggal":"2026-09-28","supplier":"AOP","kategori":"Aki & Baterai","nota":"","nama":"Barang dagangan Shop And Drive","nominal":31743686,"statusOwner":"approved","updatedAt":"2026-10-06T00:52:07.128Z","createdAt":"2026-10-06T00:52:07.128Z"},{"id":"TARIK-1791247821065","type":"penarikan","tanggal":"2026-09-28","kategori":"Keperluan Darurat / Lainnya","keterangan":"??","penerima":"","nominal":10073761,"statusOwner":"pending","updatedAt":"2026-10-06T00:50:21.065Z","createdAt":"2026-10-06T00:50:21.065Z"},{"id":"TARIK-1791247688249","type":"penarikan","tanggal":"2026-09-27","kategori":"Prive / Bagi Hasil Owner","keterangan":"Prive cicilan Hutang","penerima":"Rek Mandiri Bp Swanto","nominal":7500000,"statusOwner":"approved","updatedAt":"2026-10-06T00:48:08.249Z","createdAt":"2026-10-06T00:48:08.249Z"},{"id":"TARIK-1791247614888","type":"penarikan","tanggal":"2026-09-27","kategori":"Gaji & Insentif Karyawan","keterangan":"Bayar Gaji","penerima":"Adis Setiawan ( kepala Toko )","nominal":12830000,"statusOwner":"approved","updatedAt":"2026-10-06T00:46:54.888Z","createdAt":"2026-10-06T00:46:54.888Z"},{"id":"TARIK-1790076045480","type":"penarikan","tanggal":"2026-09-22","kategori":"Biaya Admin / Bunga Bank","keterangan":"Biaya Listrik dan Beli peralatan cek aki","penerima":"","nominal":3226500,"statusOwner":"approved","updatedAt":"2026-09-22T11:20:45.480Z","createdAt":"2026-09-22T11:20:45.480Z"},{"id":"TARIK-1789956583708","type":"penarikan","tanggal":"2026-09-06","kategori":"Prive / Bagi Hasil Owner","keterangan":"Belanja Peralatan","penerima":"SAEFUDIN","nominal":2000000,"statusOwner":"approved","updatedAt":"2026-09-21T02:09:43.708Z","createdAt":"2026-09-21T02:09:43.708Z"},{"id":"RESTOK-1789956528819","type":"restok","tanggal":"2026-09-06","supplier":"AOP","kategori":"Aki & Baterai","nota":"","nama":"Belanja Barang Dagangan","nominal":57723505,"statusOwner":"approved","updatedAt":"2026-09-21T02:08:48.820Z","createdAt":"2026-09-21T02:08:48.820Z"},{"id":"TARIK-1789956438284","type":"penarikan","tanggal":"2026-09-02","kategori":"Biaya Admin / Bunga Bank","keterangan":"Biaya Bulanan Rekening","penerima":"Bank Mandiri","nominal":10500,"statusOwner":"approved","updatedAt":"2026-09-21T02:07:18.285Z","createdAt":"2026-09-21T02:07:18.285Z"},{"id":"TARIK-1789954072788","type":"penarikan","tanggal":"2026-09-20","kategori":"Pajak & Legalitas","keterangan":"PPH Final badan Agst 2026","penerima":"DJP","nominal":1188870,"statusOwner":"approved","updatedAt":"2026-09-21T01:27:52.789Z","createdAt":"2026-09-21T01:27:52.789Z"},{"id":"TARIK-1789954022540","type":"penarikan","tanggal":"2026-09-20","kategori":"Pajak & Legalitas","keterangan":"DJP","penerima":"PPN Agustus 2026","nominal":4664545,"statusOwner":"approved","updatedAt":"2026-09-21T01:27:02.540Z","createdAt":"2026-09-21T01:27:02.540Z"},{"id":"TARIK-1789953971068","type":"penarikan","tanggal":"2026-09-20","kategori":"Pajak & Legalitas","keterangan":"PPH21","penerima":"DJP","nominal":91250,"statusOwner":"approved","updatedAt":"2026-09-21T01:26:11.068Z","createdAt":"2026-09-21T01:26:11.068Z"},{"id":"TARIK-1789953898836","type":"penarikan","tanggal":"2026-09-18","kategori":"Biaya Admin / Bunga Bank","keterangan":"Biaya admin","penerima":"","nominal":2500,"statusOwner":"approved","updatedAt":"2026-09-21T01:24:58.836Z","createdAt":"2026-09-21T01:24:58.836Z"},{"id":"TARIK-1789953843524","type":"penarikan","tanggal":"2026-09-18","kategori":"Keperluan Darurat / Lainnya","keterangan":"Tarikan Kas untuk beli Oli tambahan","penerima":"KARTIKA","nominal":14450000,"statusOwner":"approved","updatedAt":"2026-09-21T01:24:03.524Z","createdAt":"2026-09-21T01:24:03.524Z"},{"id":"TARIK-1789953728437","type":"penarikan","tanggal":"2026-09-14","kategori":"Prive / Bagi Hasil Owner","keterangan":"Penarikan Owner","penerima":"Mandiri 1560004534105","nominal":20000000,"statusOwner":"approved","updatedAt":"2026-09-21T01:22:08.437Z","createdAt":"2026-09-21T01:22:08.437Z"},{"id":"RESTOK-1789953644394","type":"restok","tanggal":"2026-09-14","supplier":"AOP","kategori":"Aki & Baterai","nota":"","nama":"Barang dagangan Shop & Drive","nominal":66297436,"statusOwner":"approved","updatedAt":"2026-09-21T01:20:44.394Z","createdAt":"2026-09-21T01:20:44.394Z"},{"id":"RESTOK-1789953299477","type":"restok","tanggal":"2026-09-21","supplier":"AOP","kategori":"Sparepart & Onderdil","nota":"","nama":"Barang dagangan Shop And Drive","nominal":58324089,"statusOwner":"approved","updatedAt":"2026-09-21T01:14:59.477Z","createdAt":"2026-09-21T01:14:59.477Z"}],"records":[{"id":"REC-20261005-1058","tanggal":"2026-10-05","kasir":"Satria jaka Surya","catatan":"","saldoAwal":0,"penjualanShopDrive":12428920,"penjualanBimaMotor":100000,"pemasukanLain":1200000,"keteranganPemasukanLain":"Penjualan Oli Bekas","totalPemasukan":13728920,"transferMandiri":2395000,"cardEdc":5316910,"penghematanTradeIn":705000,"biayaOperasional":0,"totalPengeluaranKas":8416910,"sisaUangKasKecil":5312010,"fisikRiil":5312000,"selisih":-10,"expenses":[],"createdAt":"2026-10-06T00:22:01.058Z","sudahDiambil":true,"statusUpdatedAt":"2026-10-06T00:22:09.460Z"},{"id":"REC-20261004-3714","tanggal":"2026-10-04","kasir":"Satria jaka Surya","catatan":"","saldoAwal":0,"penjualanShopDrive":24767540,"penjualanBimaMotor":540000,"pemasukanLain":0,"keteranganPemasukanLain":"","totalPemasukan":25307540,"transferMandiri":1680500,"cardEdc":18819530,"penghematanTradeIn":2210000,"biayaOperasional":1150000,"totalPengeluaranKas":23860030,"sisaUangKasKecil":1447510,"fisikRiil":1447500,"selisih":-10,"expenses":[{"id":1791245699079,"desc":"","amount":1150000}],"createdAt":"2026-10-06T00:15:43.714Z","sudahDiambil":true,"statusUpdatedAt":"2026-10-06T00:22:14.515Z"},{"id":"REC-20261003-8456","tanggal":"2026-10-03","kasir":"Adis Setiawan","catatan":"","saldoAwal":0,"penjualanShopDrive":19374030,"penjualanBimaMotor":520000,"pemasukanLain":0,"keteranganPemasukanLain":"","totalPemasukan":19894030,"transferMandiri":500000,"cardEdc":11974030,"penghematanTradeIn":593000,"biayaOperasional":20000,"totalPengeluaranKas":13087030,"sisaUangKasKecil":6807000,"fisikRiil":6807000,"selisih":0,"expenses":[{"id":1791245539554,"desc":"","amount":20000}],"createdAt":"2026-10-06T00:12:48.456Z","sudahDiambil":true,"statusUpdatedAt":"2026-10-06T00:22:37.921Z"},{"id":"REC-20261002-5865","tanggal":"2026-10-02","kasir":"Satria jaka Surya","catatan":"","saldoAwal":0,"penjualanShopDrive":7747510,"penjualanBimaMotor":80000,"pemasukanLain":0,"keteranganPemasukanLain":"","totalPemasukan":7827510,"transferMandiri":0,"cardEdc":6565510,"penghematanTradeIn":394000,"biayaOperasional":0,"totalPengeluaranKas":6959510,"sisaUangKasKecil":868000,"fisikRiil":868000,"selisih":0,"expenses":[],"createdAt":"2026-10-06T00:10:45.865Z","sudahDiambil":true,"statusUpdatedAt":"2026-10-06T00:22:34.018Z"},{"id":"REC-20261001-9643","tanggal":"2026-10-01","kasir":"Adis Setiawan","catatan":"","saldoAwal":0,"penjualanShopDrive":11853030,"penjualanBimaMotor":0,"pemasukanLain":0,"keteranganPemasukanLain":"","totalPemasukan":11853030,"transferMandiri":3601010,"cardEdc":5289000,"penghematanTradeIn":577000,"biayaOperasional":190000,"totalPengeluaranKas":9657010,"sisaUangKasKecil":2196020,"fisikRiil":2196000,"selisih":-20,"expenses":[{"id":1791245279960,"desc":"","amount":190000}],"createdAt":"2026-10-06T00:08:49.643Z","sudahDiambil":true,"statusUpdatedAt":"2026-10-06T00:22:28.950Z"},{"id":"REC-20260930-5770","tanggal":"2026-09-30","kasir":"Adis Setiawan","catatan":"","saldoAwal":0,"penjualanShopDrive":13128020,"penjualanBimaMotor":250000,"pemasukanLain":0,"keteranganPemasukanLain":"","totalPemasukan":13378020,"transferMandiri":3601010,"cardEdc":9035010,"penghematanTradeIn":492000,"biayaOperasional":100000,"totalPengeluaranKas":13228020,"sisaUangKasKecil":150000,"fisikRiil":150000,"selisih":0,"expenses":[{"id":1791245163967,"desc":"","amount":100000}],"createdAt":"2026-10-06T00:06:25.770Z","sudahDiambil":true,"statusUpdatedAt":"2026-10-06T00:06:34.013Z"},{"id":"REC-20260929-9983","tanggal":"2026-09-29","kasir":"Adis Setiawan","catatan":"","saldoAwal":0,"penjualanShopDrive":11137020,"penjualanBimaMotor":0,"pemasukanLain":0,"keteranganPemasukanLain":"","totalPemasukan":11137020,"transferMandiri":0,"cardEdc":7744020,"penghematanTradeIn":602000,"biayaOperasional":144000,"totalPengeluaranKas":8490020,"sisaUangKasKecil":2647000,"fisikRiil":2647000,"selisih":0,"expenses":[{"id":1791244921410,"desc":"","amount":144000}],"createdAt":"2026-10-06T00:03:49.983Z","sudahDiambil":true,"statusUpdatedAt":"2026-10-06T00:03:57.525Z"},{"id":"REC-20260928-9465","tanggal":"2026-09-28","kasir":"Satria jaka Surya","catatan":"","saldoAwal":0,"penjualanShopDrive":13981030,"penjualanBimaMotor":0,"pemasukanLain":0,"keteranganPemasukanLain":"","totalPemasukan":13981030,"transferMandiri":1935000,"cardEdc":9708010,"penghematanTradeIn":980000,"biayaOperasional":78000,"totalPengeluaranKas":12701010,"sisaUangKasKecil":1280020,"fisikRiil":1280000,"selisih":-20,"expenses":[{"id":1791244648400,"desc":"","amount":78000}],"createdAt":"2026-10-05T23:58:19.465Z","sudahDiambil":true,"statusUpdatedAt":"2026-10-05T23:58:34.204Z"},{"id":"REC-20260927-9362","tanggal":"2026-09-27","kasir":"Adis Setiawan","catatan":"","saldoAwal":0,"penjualanShopDrive":16896050,"penjualanBimaMotor":0,"pemasukanLain":0,"keteranganPemasukanLain":"","totalPemasukan":16896050,"transferMandiri":2575010,"cardEdc":12593520,"penghematanTradeIn":1362000,"biayaOperasional":0,"totalPengeluaranKas":16530530,"sisaUangKasKecil":365520,"fisikRiil":365520,"selisih":0,"expenses":[],"createdAt":"2026-10-05T23:53:49.362Z","sudahDiambil":true,"statusUpdatedAt":"2026-10-05T23:58:41.252Z"},{"id":"REC-20260926-9937","tanggal":"2026-09-26","kasir":"Adis Setiawan","catatan":"","saldoAwal":0,"penjualanShopDrive":15411530,"penjualanBimaMotor":0,"pemasukanLain":0,"keteranganPemasukanLain":"","totalPemasukan":15411530,"transferMandiri":1865000,"cardEdc":9592520,"penghematanTradeIn":944000,"biayaOperasional":41500,"totalPengeluaranKas":12443020,"sisaUangKasKecil":2968510,"fisikRiil":2968510,"selisih":0,"expenses":[{"id":1791243627431,"desc":"","amount":41500}],"createdAt":"2026-10-05T23:41:39.937Z","sudahDiambil":true,"statusUpdatedAt":"2026-10-05T23:58:47.711Z"},{"id":"REC-20260925-5992","tanggal":"2026-09-25","kasir":"Adis Setiawan","catatan":"","saldoAwal":0,"penjualanShopDrive":3819000,"penjualanBimaMotor":0,"pemasukanLain":0,"keteranganPemasukanLain":"","totalPemasukan":3819000,"transferMandiri":358000,"cardEdc":2934500,"penghematanTradeIn":0,"biayaOperasional":0,"totalPengeluaranKas":3292500,"sisaUangKasKecil":526500,"fisikRiil":526500,"selisih":0,"expenses":[],"createdAt":"2026-10-05T23:35:45.992Z","sudahDiambil":true},{"id":"REC-1791242000785","tanggal":"2026-09-24","kasir":"Satria jaka Surya","catatan":"","saldoAwal":0,"penjualanShopDrive":5089040,"penjualanBimaMotor":0,"pemasukanLain":0,"keteranganPemasukanLain":"","totalPemasukan":5089040,"transferMandiri":772000,"cardEdc":3761030,"penghematanTradeIn":493000,"biayaOperasional":0,"totalPengeluaranKas":5026030,"sisaUangKasKecil":63010,"fisikRiil":63000,"selisih":-10,"expenses":[],"createdAt":"2026-10-05T23:13:20.785Z","sudahDiambil":true},{"id":"REC-1791241793408","tanggal":"2026-09-23","kasir":"Adis Setiawan","catatan":"","saldoAwal":0,"penjualanShopDrive":10111530,"penjualanBimaMotor":400000,"pemasukanLain":0,"keteranganPemasukanLain":"","totalPemasukan":10511530,"transferMandiri":807000,"cardEdc":7762520,"penghematanTradeIn":492000,"biayaOperasional":0,"totalPengeluaranKas":9061520,"sisaUangKasKecil":1450010,"fisikRiil":1450000,"selisih":-10,"expenses":[],"createdAt":"2026-10-05T23:10:13.714Z","sudahDiambil":true},{"id":"REC-1791239697215","tanggal":"2026-09-22","kasir":"Satria jaka Surya","catatan":"","saldoAwal":0,"penjualanShopDrive":17400040,"penjualanBimaMotor":260000,"pemasukanLain":0,"keteranganPemasukanLain":"","totalPemasukan":17660040,"transferMandiri":4925020,"cardEdc":11440020,"penghematanTradeIn":1143000,"biayaOperasional":20000,"totalPengeluaranKas":17528040,"sisaUangKasKecil":132000,"fisikRiil":132000,"selisih":0,"expenses":[{"id":1791239656716,"desc":"Bensin","amount":20000}],"createdAt":"2026-10-05T22:35:44.516Z","sudahDiambil":true},{"id":"REC-1789996551365","tanggal":"2026-09-21","kasir":"Adis Setiawan","catatan":"","saldoAwal":0,"penjualanShopDrive":13465030,"penjualanBimaMotor":400000,"totalPemasukan":13865030,"transferMandiri":0,"cardEdc":6556520,"penghematanTradeIn":835000,"biayaOperasional":3226500,"totalPengeluaranKas":10618020,"sisaUangKasKecil":3247010,"fisikRiil":3247500,"selisih":490,"expenses":[{"id":1789996469714,"desc":"Peralatan","amount":1126500},{"id":1790075541602,"desc":"Bayar Listrik September","amount":2100000}],"createdAt":"2026-09-22T11:13:16.786Z","sudahDiambil":true},{"id":"REC-1789956130028","tanggal":"2026-09-20","kasir":"Adis Setiawan","catatan":"","saldoAwal":0,"penjualanShopDrive":14488550,"penjualanBimaMotor":100000,"totalPemasukan":14588550,"transferMandiri":2237020,"cardEdc":10971030,"penghematanTradeIn":1389000,"biayaOperasional":60000,"totalPengeluaranKas":14657050,"sisaUangKasKecil":-68500,"fisikRiil":0,"selisih":68500,"expenses":[{"id":1789956094196,"desc":"Bensin BHD","amount":40000},{"id":1789956106565,"desc":"Isolasi","amount":20000},{"id":1789956118531,"desc":"","amount":0}],"createdAt":"2026-09-21T02:02:10.028Z","sudahDiambil":true},{"id":"REC-1789955734372","tanggal":"2026-09-19","kasir":"Adis","catatan":"","saldoAwal":0,"penjualanShopDrive":10429030,"penjualanBimaMotor":300000,"totalPemasukan":10729030,"transferMandiri":0,"cardEdc":8983020,"penghematanTradeIn":554000,"biayaOperasional":20000,"totalPengeluaranKas":9557020,"sisaUangKasKecil":1172010,"fisikRiil":1172000,"selisih":-10,"expenses":[{"id":1789955667757,"desc":"Lem campur","amount":20000}],"createdAt":"2026-09-21T01:55:34.372Z","sudahDiambil":true},{"id":"REC-1789955861700","tanggal":"2026-09-18","kasir":"Adis Setiawan","catatan":"","saldoAwal":0,"penjualanShopDrive":7558020,"penjualanBimaMotor":0,"totalPemasukan":7558020,"transferMandiri":1921010,"cardEdc":4494010,"penghematanTradeIn":357000,"biayaOperasional":50000,"totalPengeluaranKas":6822020,"sisaUangKasKecil":736000,"fisikRiil":736000,"selisih":0,"expenses":[{"id":1789955822307,"desc":"Bensin BHD/DOI","amount":50000}],"createdAt":"2026-09-21T01:57:41.700Z","sudahDiambil":true},{"id":"REC-1789654273220","tanggal":"2026-09-17","kasir":"Adis Setiawan","catatan":"","saldoAwal":0,"penjualanShopDrive":9812520,"penjualanBimaMotor":400000,"totalPemasukan":10212520,"transferMandiri":3247000,"cardEdc":4889510,"penghematanTradeIn":397000,"biayaOperasional":115000,"totalPengeluaranKas":8648510,"sisaUangKasKecil":1564010,"fisikRiil":1564000,"selisih":-10,"expenses":[{"id":1789654206531,"desc":"Tagihan kartu simpati","amount":115000}],"createdAt":"2026-09-17T14:11:13.220Z","sudahDiambil":true},{"id":"REC-1789604109532","tanggal":"2026-09-16","kasir":"Kasir","catatan":"","saldoAwal":0,"penjualanShopDrive":4429500,"penjualanBimaMotor":200000,"totalPemasukan":4629500,"transferMandiri":2684500,"cardEdc":1743000,"penghematanTradeIn":202000,"biayaOperasional":0,"totalPengeluaranKas":4629500,"sisaUangKasKecil":0,"fisikRiil":0,"selisih":0,"expenses":[],"createdAt":"2026-09-17T00:15:09.532Z","sudahDiambil":true},{"id":"REC-1789529482044","tanggal":"2026-09-15","kasir":"Surya","catatan":"","saldoAwal":0,"penjualanShopDrive":8822020,"penjualanBimaMotor":100000,"totalPemasukan":8922020,"transferMandiri":135500,"cardEdc":5714510,"penghematanTradeIn":910000,"biayaOperasional":0,"totalPengeluaranKas":6760010,"sisaUangKasKecil":2162010,"fisikRiil":2162000,"selisih":-10,"expenses":[],"createdAt":"2026-09-16T03:31:22.044Z","sudahDiambil":true},{"id":"REC-1789391132957","tanggal":"2026-09-14","kasir":"Adis Setiawan","catatan":"","saldoAwal":0,"penjualanShopDrive":11267000,"penjualanBimaMotor":200000,"totalPemasukan":11467000,"transferMandiri":5155010,"cardEdc":4367000,"penghematanTradeIn":586000,"biayaOperasional":100000,"totalPengeluaranKas":10208010,"sisaUangKasKecil":1258990,"fisikRiil":1258900,"selisih":-90,"expenses":[{"id":1789391034732,"desc":"Iuran Bulanan RT","amount":100000}],"createdAt":"2026-09-14T13:05:32.957Z","sudahDiambil":true},{"id":"REC-1789308029651","tanggal":"2026-09-13","kasir":"Adis Setiawan","catatan":"","saldoAwal":0,"penjualanShopDrive":18319530,"penjualanBimaMotor":500000,"totalPemasukan":18819530,"transferMandiri":514000,"cardEdc":16783510,"penghematanTradeIn":862000,"biayaOperasional":75000,"totalPengeluaranKas":18234510,"sisaUangKasKecil":585020,"fisikRiil":585000,"selisih":-20,"expenses":[{"id":1789307977288,"desc":"Sabun Pel","amount":45000},{"id":1789307991801,"desc":"Minyak BHD","amount":30000}],"createdAt":"2026-09-13T14:00:29.651Z","sudahDiambil":true},{"id":"REC-1789309165009","tanggal":"2026-09-12","kasir":"Kasir","catatan":"","saldoAwal":0,"penjualanShopDrive":19063058,"penjualanBimaMotor":600000,"totalPemasukan":19663058,"transferMandiri":3109010,"cardEdc":15050540,"penghematanTradeIn":1316000,"biayaOperasional":30000,"totalPengeluaranKas":19505550,"sisaUangKasKecil":157508,"fisikRiil":158500,"selisih":992,"expenses":[{"id":1789301677885,"desc":"Bensin BHD","amount":30000}],"createdAt":"2026-09-13T14:19:25.009Z","sudahDiambil":true},{"id":"REC-1789301578709","tanggal":"2026-09-11","kasir":"Kasir","catatan":"","saldoAwal":0,"penjualanShopDrive":13140040,"penjualanBimaMotor":100000,"totalPemasukan":13240040,"transferMandiri":0,"cardEdc":10482020,"penghematanTradeIn":783000,"biayaOperasional":0,"totalPengeluaranKas":11265020,"sisaUangKasKecil":1975020,"fisikRiil":1975000,"selisih":-20,"expenses":[],"createdAt":"2026-09-13T12:12:58.709Z","sudahDiambil":true},{"id":"REC-1789301495996","tanggal":"2026-09-10","kasir":"Kasir","catatan":"","saldoAwal":0,"penjualanShopDrive":12429640,"penjualanBimaMotor":200000,"totalPemasukan":12629640,"transferMandiri":1316000,"cardEdc":10151640,"penghematanTradeIn":769000,"biayaOperasional":20000,"totalPengeluaranKas":12256640,"sisaUangKasKecil":373000,"fisikRiil":373000,"selisih":0,"expenses":[{"id":1789301469959,"desc":"Minyak BHD","amount":20000}],"createdAt":"2026-09-13T12:11:35.996Z","sudahDiambil":true},{"id":"REC-1789301399517","tanggal":"2026-09-09","kasir":"Kasir","catatan":"","saldoAwal":0,"penjualanShopDrive":7429040,"penjualanBimaMotor":200000,"totalPemasukan":7629040,"transferMandiri":0,"cardEdc":6777040,"penghematanTradeIn":652000,"biayaOperasional":0,"totalPengeluaranKas":7429040,"sisaUangKasKecil":200000,"fisikRiil":200000,"selisih":0,"expenses":[],"createdAt":"2026-09-13T12:09:59.517Z","sudahDiambil":true},{"id":"REC-1789301326469","tanggal":"2026-09-08","kasir":"Kasir","catatan":"","saldoAwal":0,"penjualanShopDrive":10329050,"penjualanBimaMotor":200000,"totalPemasukan":10529050,"transferMandiri":3928010,"cardEdc":3984510,"penghematanTradeIn":579000,"biayaOperasional":130000,"totalPengeluaranKas":8621520,"sisaUangKasKecil":1907530,"fisikRiil":1907500,"selisih":-30,"expenses":[{"id":1789301273549,"desc":"Air Gun Kompressor","amount":100000},{"id":1789301288205,"desc":"Bensin BHD","amount":30000}],"createdAt":"2026-09-13T12:08:46.470Z","sudahDiambil":true},{"id":"REC-1789301198318","tanggal":"2026-09-07","kasir":"Kasir","catatan":"","saldoAwal":0,"penjualanShopDrive":12209020,"penjualanBimaMotor":500000,"totalPemasukan":12709020,"transferMandiri":1226000,"cardEdc":8437000,"penghematanTradeIn":622000,"biayaOperasional":2381000,"totalPengeluaranKas":12666000,"sisaUangKasKecil":43020,"fisikRiil":43000,"selisih":-20,"expenses":[{"id":1789301148973,"desc":"Transfer PT Afta 2 September ","amount":2381000}],"createdAt":"2026-09-13T12:06:38.318Z","sudahDiambil":true},{"id":"REC-1789301092596","tanggal":"2026-09-06","kasir":"Kasir","catatan":"","saldoAwal":0,"penjualanShopDrive":10231510,"penjualanBimaMotor":300000,"totalPemasukan":10531510,"transferMandiri":0,"cardEdc":9836510,"penghematanTradeIn":695000,"biayaOperasional":0,"totalPengeluaranKas":10531510,"sisaUangKasKecil":0,"fisikRiil":0,"selisih":0,"expenses":[],"createdAt":"2026-09-13T12:04:52.596Z","sudahDiambil":true},{"id":"REC-1789301019285","tanggal":"2026-09-05","kasir":"Kasir","catatan":"","saldoAwal":0,"penjualanShopDrive":23956530,"penjualanBimaMotor":200000,"totalPemasukan":24156530,"transferMandiri":4842010,"cardEdc":17243520,"penghematanTradeIn":1093000,"biayaOperasional":165000,"totalPengeluaranKas":23343530,"sisaUangKasKecil":813000,"fisikRiil":813000,"selisih":0,"expenses":[{"id":1789300956165,"desc":"Cetak Spanduk Aki","amount":100000},{"id":1789300970966,"desc":"Bensin BHD","amount":40000},{"id":1789300985196,"desc":"Sabun Pel","amount":25000}],"createdAt":"2026-09-13T12:03:39.285Z","sudahDiambil":true},{"id":"REC-1789300880459","tanggal":"2026-09-04","kasir":"Kasir","catatan":"","saldoAwal":0,"penjualanShopDrive":9938010,"penjualanBimaMotor":0,"totalPemasukan":9938010,"transferMandiri":7316010,"cardEdc":1730000,"penghematanTradeIn":265000,"biayaOperasional":35000,"totalPengeluaranKas":9346010,"sisaUangKasKecil":592000,"fisikRiil":592000,"selisih":0,"expenses":[{"id":1789300834181,"desc":"Air Galon ","amount":35000}],"createdAt":"2026-09-13T12:01:20.459Z","sudahDiambil":true},{"id":"REC-1789300775446","tanggal":"2026-09-03","kasir":"Kasir","catatan":"","saldoAwal":0,"penjualanShopDrive":7771010,"penjualanBimaMotor":0,"totalPemasukan":7771010,"transferMandiri":2096510,"cardEdc":4279500,"penghematanTradeIn":648000,"biayaOperasional":210000,"totalPengeluaranKas":7234010,"sisaUangKasKecil":537000,"fisikRiil":537000,"selisih":0,"expenses":[{"id":1789300721388,"desc":"Bensin BHD","amount":20000},{"id":1789300735364,"desc":"BPJS Rengga","amount":190000}],"createdAt":"2026-09-13T11:59:35.446Z","sudahDiambil":true},{"id":"REC-1789301941852","tanggal":"2026-09-02","kasir":"Kasir","catatan":"","saldoAwal":0,"penjualanShopDrive":8057020,"penjualanBimaMotor":0,"totalPemasukan":8057020,"transferMandiri":2264000,"cardEdc":3994510,"penghematanTradeIn":488000,"biayaOperasional":0,"totalPengeluaranKas":6746510,"sisaUangKasKecil":1310510,"fisikRiil":1310500,"selisih":-10,"expenses":[],"createdAt":"2026-09-13T12:19:01.852Z","sudahDiambil":true},{"id":"REC-1789300563188","tanggal":"2026-09-01","kasir":"Kasir","catatan":"","saldoAwal":0,"penjualanShopDrive":9387520,"penjualanBimaMotor":0,"totalPemasukan":9387520,"transferMandiri":544500,"cardEdc":7100020,"penghematanTradeIn":585000,"biayaOperasional":75000,"totalPengeluaranKas":8304520,"sisaUangKasKecil":1083000,"fisikRiil":1083000,"selisih":0,"expenses":[{"id":1789300493581,"desc":"Motor BHD","amount":15000},{"id":1789300506268,"desc":"Minyak BHD","amount":40000},{"id":1789300517500,"desc":"Sabun Pel","amount":20000}],"createdAt":"2026-09-13T11:56:03.188Z","sudahDiambil":true}]};
-  </script>
-  <script src="bank.js"></script>
+  <script src="data-seed.js?v=20261006_3"></script>
+  <script src="bank.js?v=20261006_3"></script>
 </body>
 </html>

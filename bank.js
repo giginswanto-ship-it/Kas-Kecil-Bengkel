@@ -946,6 +946,133 @@ function processOwnerValidation(newStatus) {
 }
 
 // -------------------------------------------------------------
+// MODAL CONTROLLERS & ACTIONS
+// -------------------------------------------------------------
+
+function openBankSettingsModal() {
+  const settings = getBankSettings();
+  const elSaldo = document.getElementById('settingBankSaldoAwal');
+  if (elSaldo) elSaldo.value = Number(settings.saldoAwal || 0).toLocaleString('id-ID');
+  const elAcc = document.getElementById('settingBankAccountName');
+  if (elAcc) elAcc.value = settings.accountName || '';
+  const elOwner = document.getElementById('settingBankOwnerName');
+  if (elOwner) elOwner.value = settings.ownerName || '';
+  const modal = document.getElementById('modalBankSettings');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function saveBankSettingsFromModal() {
+  const elSaldo = document.getElementById('settingBankSaldoAwal');
+  const elAcc = document.getElementById('settingBankAccountName');
+  const elOwner = document.getElementById('settingBankOwnerName');
+
+  const saldoAwal = parseNumber(elSaldo?.value || 0);
+  const accountName = elAcc?.value.trim() || 'Bank Mandiri - 1560023250204';
+  const ownerName = elOwner?.value.trim() || 'PT DUTARAYA BERJAYA';
+
+  const newSettings = {
+    saldoAwal,
+    saldoBulanLalu: saldoAwal,
+    accountName,
+    ownerName,
+    bengkelName: 'Shop & Drive & Bima Motor'
+  };
+
+  saveBankSettings(newSettings);
+  closeModal('modalBankSettings');
+  renderAllViews();
+  showBankToast('Pengaturan saldo acuan & rekening berhasil disimpan!', 'success');
+
+  if (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http')) {
+    fetch('/api/bank', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'saveSettings', settings: newSettings })
+    }).catch(err => console.warn('Sync settings to /api/bank error:', err));
+  }
+}
+
+function closeModal(modalId) {
+  if (!modalId) return;
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.classList.add('hidden');
+  }
+}
+
+function lockOwnerSession() {
+  if (confirm('Kunci akses Owner dan kembali ke Beranda Kas Kecil?')) {
+    sessionStorage.removeItem(OWNER_AUTH_SESSION_KEY);
+    window.location.href = 'index.html';
+  }
+}
+
+function editBankTransaction(id) {
+  openEditModal(id);
+}
+
+// Auto Fetch live server database in background
+async function autoFetchDatabaseOnLoad() {
+  if (typeof window === 'undefined' || !window.location || !window.location.protocol.startsWith('http')) {
+    return;
+  }
+  try {
+    let res = await fetch('/api/database');
+    if (!res.ok) {
+      res = await fetch('database_kas_bengkel.json');
+    }
+    if (res.ok) {
+      const data = await res.json();
+      let changed = false;
+
+      if (data && Array.isArray(data.records) && data.records.length > 0) {
+        const currentKas = getKasRecords();
+        let mergedKas = [...currentKas];
+        data.records.forEach(r => {
+          if (!mergedKas.some(k => k.id === r.id || (k.tanggal === r.tanggal && k.tanggal))) {
+            mergedKas.push(r);
+            changed = true;
+          }
+        });
+        if (changed) {
+          mergedKas.sort((a, b) => (b.tanggal || '').localeCompare(a.tanggal || ''));
+          localStorage.setItem(KAS_STORAGE_KEY, JSON.stringify(mergedKas));
+        }
+      }
+
+      if (data && Array.isArray(data.bankTransactions) && data.bankTransactions.length > 0) {
+        const currentBank = getBankTransactions();
+        let mergedBank = [...currentBank];
+        data.bankTransactions.forEach(t => {
+          if (!mergedBank.some(b => b.id === t.id)) {
+            mergedBank.push(t);
+            changed = true;
+          }
+        });
+        if (changed) {
+          mergedBank.sort((a, b) => (b.tanggal || '').localeCompare(a.tanggal || ''));
+          saveBankTransactions(mergedBank);
+        }
+      }
+
+      if (data && data.bankSettings) {
+        const curSettings = getBankSettings();
+        if (!curSettings.saldoAwal || curSettings.saldoAwal === 0) {
+          saveBankSettings(data.bankSettings);
+          changed = true;
+        }
+      }
+
+      if (changed) {
+        renderAllViews();
+      }
+    }
+  } catch (err) {
+    console.warn('Auto fetch database error:', err);
+  }
+}
+
+// -------------------------------------------------------------
 // TAB SWITCHER
 // -------------------------------------------------------------
 
@@ -1295,24 +1422,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnTambahPenarikanEmpty')?.addEventListener('click', openAddPenarikanModal);
 
   // Settings Modal
-  document.getElementById('btnOpenBankSettings')?.addEventListener('click', () => {
-    const settings = getBankSettings();
-    document.getElementById('settingBankSaldoAwal').value = Number(settings.saldoAwal || 0).toLocaleString('id-ID');
-    document.getElementById('settingBankAccountName').value = settings.accountName || '';
-    document.getElementById('settingBankOwnerName').value = settings.ownerName || '';
-    document.getElementById('modalBankSettings').classList.remove('hidden');
-  });
-
-  document.getElementById('btnSaveBankSettings')?.addEventListener('click', () => {
-    const saldoAwal = parseNumber(document.getElementById('settingBankSaldoAwal')?.value || 0);
-    const accountName = document.getElementById('settingBankAccountName')?.value.trim() || 'Bank Mandiri - 1560023250204';
-    const ownerName = document.getElementById('settingBankOwnerName')?.value.trim() || 'PT DUTARAYA BERJAYA';
-
-    saveBankSettings({ saldoAwal, saldoBulanLalu: saldoAwal, accountName, ownerName });
-    document.getElementById('modalBankSettings').classList.add('hidden');
-    renderAllViews();
-    showBankToast('Pengaturan saldo acuan & rekening berhasil disimpan!', 'success');
-  });
+  document.getElementById('btnOpenBankSettings')?.addEventListener('click', openBankSettingsModal);
+  document.getElementById('btnSaveBankSettings')?.addEventListener('click', saveBankSettingsFromModal);
 
   // Close modals buttons
   document.querySelectorAll('.btn-close-modal').forEach(btn => {
@@ -1427,4 +1538,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initial render
   renderAllViews();
+
+  // Background auto-sync from central live API / database
+  autoFetchDatabaseOnLoad();
 });
+
+// Explicitly expose all functions on window for inline onclick & global execution
+if (typeof window !== 'undefined') {
+  window.openAddRestokModal = openAddRestokModal;
+  window.openAddPenarikanModal = openAddPenarikanModal;
+  window.openBankSettingsModal = openBankSettingsModal;
+  window.saveBankSettingsFromModal = saveBankSettingsFromModal;
+  window.closeModal = closeModal;
+  window.openEditModal = openEditModal;
+  window.editBankTransaction = openEditModal;
+  window.deleteTransaction = deleteTransaction;
+  window.deleteBankTransaction = deleteTransaction;
+  window.openValidationDialog = openValidationDialog;
+  window.openOwnerValidationModal = openValidationDialog;
+  window.processOwnerValidation = processOwnerValidation;
+  window.switchTab = switchTab;
+  window.exportBankToExcelCSV = exportBankToExcelCSV;
+  window.downloadBankReportAsPdf = downloadBankReportAsPdf;
+  window.syncFromKasirAndDatabase = syncFromKasirAndDatabase;
+  window.lockOwnerSession = lockOwnerSession;
+  window.kunciSesiOwner = lockOwnerSession;
+  window.recalculateBankLedger = recalculateBankLedger;
+  window.renderAllViews = renderAllViews;
+  window.formatRupiah = formatRupiah;
+  window.parseNumber = parseNumber;
+}
