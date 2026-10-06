@@ -1,7 +1,8 @@
 /**
  * SCRIPT EXPORT DATA SISTEM KAS BENGKEL KE FORMAT SQL
- * Mengonversi seluruh data dari database_kas_bengkel.json, transaksi bank,
- * rincian operasional, dan pengaturan ke file database_kas_bengkel.sql
+ * Mengonversi seluruh data riil dari database_kas_bengkel.json (35 record kas,
+ * transaksi bank mandiri, rincian biaya operasional, dan pengaturan)
+ * ke database_kas_bengkel.sql
  */
 
 const fs = require('fs');
@@ -26,51 +27,65 @@ function generateSqlDump() {
   }
 
   const records = Array.isArray(jsonData) ? jsonData : (jsonData.records || []);
+  const bankTxs = jsonData.bankTransactions || [];
+  const bankSettings = jsonData.bankSettings || {
+    accountName: 'Bank Mandiri - 1560023250204',
+    ownerName: 'PT DUTARAYA BERJAYA',
+    saldoAwal: 0,
+    saldoBulanLalu: 29384422
+  };
+  const appSettings = jsonData.appSettings || {
+    bengkelName: 'Shop & Drive & Bima Motor',
+    defaultKasir: 'Adis Setiawan',
+    pinOwner: '2209'
+  };
+
   const now = new Date().toISOString();
 
   let sql = `-- ============================================================================
--- DATABASE DUMP & SCHEMA: MONITOR KAS KECIL BENGKEL
--- Toko & Bengkel: Shop & Drive & Bima Motor / PT DUTARAYA BERJAYA
--- Tanggal Ekspor: ${now}
--- Format        : MySQL / MariaDB / PostgreSQL / SQLite Compatible DDL & DML
--- Karakter Set  : UTF-8 (utf8mb4)
+-- DATABASE DUMP & SKEMA RELASIONAL: MONITOR KAS KECIL BENGKEL
+-- Entitas Bisnis: Shop & Drive & Bima Motor / PT DUTARAYA BERJAYA
+-- Tanggal Ekspor : ${now}
+-- Format Data    : MySQL / MariaDB / PostgreSQL / SQLite Compatible DDL & DML
+-- Karakter Set   : UTF-8 (utf8mb4)
+-- Total Record   : ${records.length} Catatan Kas Harian | ${bankTxs.length} Transaksi Rekening Mandiri
 -- ============================================================================
 
--- 1. PEMBUATAN DATABASE (MySQL / MariaDB)
+-- 1. INISIALISASI DATABASE (MySQL / MariaDB)
 CREATE DATABASE IF NOT EXISTS db_kas_bengkel 
   DEFAULT CHARACTER SET utf8mb4 
   COLLATE utf8mb4_unicode_ci;
 
 USE db_kas_bengkel;
 
--- Nonaktifkan pengecekan foreign key sementara saat import dump
+-- Nonaktifkan sementara validasi foreign key saat proses dump
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- ============================================================================
 -- STRUKTUR TABEL 1: tbl_rekap_kas
--- Menyimpan pembukuan kas kecil harian, total omset, non-tunai, dan selisih
+-- Pembukuan kas kecil harian, omset toko, non-tunai, dan selisih laci
 -- ============================================================================
 DROP TABLE IF EXISTS tbl_rekap_kas;
 CREATE TABLE tbl_rekap_kas (
-  id VARCHAR(50) NOT NULL PRIMARY KEY COMMENT 'ID Unik Record (contoh: REC-20260925-01)',
+  id VARCHAR(50) NOT NULL PRIMARY KEY COMMENT 'ID Unik Record (contoh: REC-20261005-1058)',
   tanggal DATE NOT NULL COMMENT 'Tanggal rekapitulasi shift kasir (YYYY-MM-DD)',
-  kasir VARCHAR(100) NOT NULL COMMENT 'Nama kasir bertugas / shift',
+  kasir VARCHAR(100) NOT NULL COMMENT 'Nama kasir yang bertugas / shift',
   saldo_awal DECIMAL(15, 2) NOT NULL DEFAULT 0.00 COMMENT 'Modal uang kas kecil awal hari',
   penjualan_shop_drive DECIMAL(15, 2) NOT NULL DEFAULT 0.00 COMMENT 'Total penjualan omset Shop & Drive',
   penjualan_bima_motor DECIMAL(15, 2) NOT NULL DEFAULT 0.00 COMMENT 'Total penjualan omset Bima Motor',
-  pemasukan_lain DECIMAL(15, 2) NOT NULL DEFAULT 0.00 COMMENT 'Pemasukan tambahan (jasa derek, scrap aki, titipan)',
+  pemasukan_lain DECIMAL(15, 2) NOT NULL DEFAULT 0.00 COMMENT 'Pemasukan tambahan (jasa derek, scrap aki, oli bekas)',
   keterangan_pemasukan_lain TEXT DEFAULT NULL COMMENT 'Keterangan sumber pemasukan lain',
   total_pemasukan DECIMAL(15, 2) NOT NULL DEFAULT 0.00 COMMENT 'Rumus: Penjualan SD + BM + Pemasukan Lain',
   transfer_mandiri DECIMAL(15, 2) NOT NULL DEFAULT 0.00 COMMENT 'Pembayaran pelanggan via Transfer Bank Mandiri',
   card_edc DECIMAL(15, 2) NOT NULL DEFAULT 0.00 COMMENT 'Pembayaran pelanggan via Kartu Debit / EDC',
   penghematan_trade_in DECIMAL(15, 2) NOT NULL DEFAULT 0.00 COMMENT 'Diskon / Tukar tambah (Trade In) aki',
-  biaya_operasional DECIMAL(15, 2) NOT NULL DEFAULT 0.00 COMMENT 'Total pengeluaran biaya operasional / bon kasir',
+  biaya_operasional DECIMAL(15, 2) NOT NULL DEFAULT 0.00 COMMENT 'Total pengeluaran operasional toko / kasir',
   total_pengeluaran_kas DECIMAL(15, 2) NOT NULL DEFAULT 0.00 COMMENT 'Rumus: Transfer + EDC + Trade In + Biaya Ops',
   sisa_uang_kas_kecil DECIMAL(15, 2) NOT NULL DEFAULT 0.00 COMMENT 'Rumus: (Saldo Awal + Total Pemasukan) - Total Pengeluaran',
-  fisik_riil DECIMAL(15, 2) NOT NULL DEFAULT 0.00 COMMENT 'Uang fisik nyata hasil hitung di laci kasir',
+  fisik_riil DECIMAL(15, 2) NOT NULL DEFAULT 0.00 COMMENT 'Uang fisik riil hasil hitung di laci kasir',
   selisih DECIMAL(15, 2) NOT NULL DEFAULT 0.00 COMMENT 'Rumus: Fisik Riil - Sisa Kas Kecil (0 = Pas)',
   sudah_diambil TINYINT(1) NOT NULL DEFAULT 0 COMMENT '0: Belum Diambil, 1: Sudah Diambil Owner',
-  catatan TEXT DEFAULT NULL COMMENT 'Catatan serah terima kasir / keterangan selisih',
+  catatan TEXT DEFAULT NULL COMMENT 'Catatan serah terima kasir / keterangan',
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Waktu penyimpanan record',
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_tanggal (tanggal),
@@ -96,21 +111,21 @@ CREATE TABLE tbl_rincian_pengeluaran (
 
 -- ============================================================================
 -- STRUKTUR TABEL 3: tbl_transaksi_bank
--- Pencatatan Restok Bahan Bengkel & Penarikan Rekening Mandiri
+-- Rekening Koran Mandiri: Restok Bahan Bengkel, Penarikan, dan Inflow
 -- ============================================================================
 DROP TABLE IF EXISTS tbl_transaksi_bank;
 CREATE TABLE tbl_transaksi_bank (
   id VARCHAR(50) NOT NULL PRIMARY KEY COMMENT 'ID Transaksi Bank (RESTOK-xxx / TARIK-xxx)',
   type ENUM('restok', 'penarikan', 'inflow') NOT NULL COMMENT 'Jenis transaksi',
   tanggal DATE NOT NULL COMMENT 'Tanggal transaksi bank (YYYY-MM-DD)',
-  supplier VARCHAR(150) DEFAULT NULL COMMENT 'Supplier / Toko Bahan (GS Astra, Aspira, dll)',
+  supplier VARCHAR(150) DEFAULT NULL COMMENT 'Supplier / Toko Bahan (AOP, GS Astra, dll)',
   kategori VARCHAR(100) DEFAULT NULL COMMENT 'Kategori barang / jenis pengeluaran',
   nota VARCHAR(100) DEFAULT NULL COMMENT 'Nomor nota / invoice faktur',
   nama VARCHAR(150) DEFAULT NULL COMMENT 'Nama item bahan atau keperluan restok',
   keterangan TEXT DEFAULT NULL COMMENT 'Keterangan lengkap transaksi',
   penerima VARCHAR(150) DEFAULT NULL COMMENT 'Penerima penarikan dana',
   nominal DECIMAL(15, 2) NOT NULL DEFAULT 0.00 COMMENT 'Nominal dana keluar/masuk (Rp)',
-  status_owner ENUM('approved', 'pending', 'rejected') NOT NULL DEFAULT 'pending' COMMENT 'Status verifikasi owner (PIN 2209)',
+  status_owner ENUM('approved', 'pending', 'rejected') NOT NULL DEFAULT 'pending' COMMENT 'Status validasi owner (PIN 2209)',
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_bank_tanggal (tanggal),
@@ -120,7 +135,7 @@ CREATE TABLE tbl_transaksi_bank (
 
 -- ============================================================================
 -- STRUKTUR TABEL 4: tbl_pengaturan_sistem
--- Konfigurasi sistem, saldo awal rekening, PIN proteksi, nama entitas
+-- Konfigurasi sistem, saldo awal rekening, saldo bulan lalu, PIN proteksi
 -- ============================================================================
 DROP TABLE IF EXISTS tbl_pengaturan_sistem;
 CREATE TABLE tbl_pengaturan_sistem (
@@ -136,14 +151,15 @@ CREATE TABLE tbl_pengaturan_sistem (
 
 -- A. Data Isian Pengaturan Sistem
 INSERT INTO tbl_pengaturan_sistem (setting_key, setting_value, deskripsi) VALUES
-('bengkel_name', 'Shop & Drive & Bima Motor', 'Nama bengkel / unit bisnis'),
-('rekening_mandiri_name', 'Rekening Mandiri PT DUTARAYA BERJAYA', 'Nama rekening operasional bank'),
-('rekening_mandiri_nomor', '13700xxxxxxxx', 'Nomor rekening bank mandiri'),
-('owner_name', 'Bapak Owner / Pimpinan', 'Nama pemilik bengkel'),
-('pin_owner', '2209', 'PIN verifikasi owner untuk validasi status kas & rekening'),
-('saldo_awal_rekening', '0', 'Saldo awal buku rekening bank mandiri');
+('bengkel_name', ${escapeSql(appSettings.bengkelName || 'Shop & Drive & Bima Motor')}, 'Nama bengkel / unit bisnis'),
+('default_kasir', ${escapeSql(appSettings.defaultKasir || 'Adis Setiawan')}, 'Kasir default'),
+('rekening_mandiri_name', ${escapeSql(bankSettings.accountName || 'Bank Mandiri - 1560023250204')}, 'Nama rekening operasional bank'),
+('owner_name', ${escapeSql(bankSettings.ownerName || 'PT DUTARAYA BERJAYA')}, 'Nama pemilik bengkel / perusahaan'),
+('pin_owner', ${escapeSql(appSettings.pinOwner || '2209')}, 'PIN verifikasi owner untuk validasi status kas & rekening'),
+('saldo_awal_rekening', ${escapeSql(bankSettings.saldoAwal || 0)}, 'Saldo awal buku rekening bank mandiri'),
+('saldo_bulan_lalu', ${escapeSql(bankSettings.saldoBulanLalu || 29384422)}, 'Saldo buku rekening bulan lalu');
 
--- B. Data Isian Rekap Kas Harian (dari database_kas_bengkel.json)
+-- B. Data Isian Rekap Kas Harian (Total: ${records.length} Records)
 `;
 
   let expensesList = [];
@@ -159,11 +175,13 @@ INSERT INTO tbl_pengaturan_sistem (setting_key, setting_value, deskripsi) VALUES
     const valueRows = records.map((r) => {
       if (r.expenses && Array.isArray(r.expenses)) {
         r.expenses.forEach(exp => {
-          expensesList.push({
-            rekapId: r.id,
-            desc: exp.desc || exp.keterangan || '-',
-            amount: exp.amount || exp.nominal || 0
-          });
+          if (exp.desc || exp.amount) {
+            expensesList.push({
+              rekapId: r.id,
+              desc: exp.desc || exp.keterangan || 'Operasional',
+              amount: exp.amount || exp.nominal || 0
+            });
+          }
         });
       }
 
@@ -180,28 +198,33 @@ INSERT INTO tbl_pengaturan_sistem (setting_key, setting_value, deskripsi) VALUES
     });
 
     sql += valueRows.join(',\n') + ';\n\n';
-  } else {
-    sql += `-- Tidak ada record kas saat ini.\n\n`;
   }
 
-  // C. Data Isian Rincian Pengeluaran (jika ada)
+  // C. Data Isian Rincian Pengeluaran Operasional
   if (expensesList.length > 0) {
-    sql += `-- C. Data Isian Rincian Biaya Operasional Kas\n`;
+    sql += `-- C. Data Isian Rincian Biaya Operasional Kas (Total: ${expensesList.length} Rincian Bon)\n`;
     sql += `INSERT INTO tbl_rincian_pengeluaran (rekap_kas_id, keterangan, nominal) VALUES\n`;
     const expRows = expensesList.map(e => `(${escapeSql(e.rekapId)}, ${escapeSql(e.desc)}, ${Number(e.amount) || 0})`);
     sql += expRows.join(',\n') + ';\n\n';
   }
 
-  // D. Data Isian Transaksi Bank Mandiri & Restok (Template / Rekening Operasional)
-  sql += `-- D. Data Isian Transaksi Bank Mandiri (Restok Bahan Bengkel & Penarikan)
--- Catatan: Inflow otomatis tersinkronisasi dari transfer_mandiri dan card_edc tbl_rekap_kas.
-INSERT INTO tbl_transaksi_bank (
-  id, type, tanggal, supplier, kategori, nota, nama, keterangan, penerima, nominal, status_owner
-) VALUES
-('RESTOK-SAMPLE-01', 'restok', '2026-09-25', 'GS Astra Distributor', 'Aki & Battery', 'INV/GSA/2026/0925', 'Aki Maintenance Free NS40Z', 'Pembelian restok aki 5 unit', NULL, 3500000.00, 'approved'),
-('TARIK-SAMPLE-01', 'penarikan', '2026-09-25', NULL, 'Operasional Bengkel', NULL, NULL, 'Pembayaran listrik PLN bengkel & internet', 'PLN & Indihome', 650000.00, 'approved');
+  // D. Data Isian Transaksi Bank Mandiri & Restok
+  if (bankTxs.length > 0) {
+    sql += `-- D. Data Isian Transaksi Bank Mandiri (Total: ${bankTxs.length} Transaksi Riil Restok & Penarikan)\n`;
+    sql += `INSERT INTO tbl_transaksi_bank (
+  id, type, tanggal, supplier, kategori, nota, nama, keterangan, penerima, nominal, status_owner, created_at
+) VALUES\n`;
+    const txRows = bankTxs.map(t => {
+      const cDate = t.createdAt ? t.createdAt.replace('T', ' ').replace(/\.\d+Z$/, '') : now.replace('T', ' ').slice(0, 19);
+      return `(${escapeSql(t.id)}, ${escapeSql(t.type)}, ${escapeSql(t.tanggal)}, ${escapeSql(t.supplier)}, ` +
+        `${escapeSql(t.kategori)}, ${escapeSql(t.nota)}, ${escapeSql(t.nama)}, ${escapeSql(t.keterangan)}, ` +
+        `${escapeSql(t.penerima)}, ${Number(t.nominal) || 0}, ${escapeSql(t.statusOwner || 'approved')}, ${escapeSql(cDate)})`;
+    });
+    sql += txRows.join(',\n') + ';\n\n';
+  }
 
--- ============================================================================
+  // E. Views
+  sql += `-- ============================================================================
 -- VIEW LAPORAN & ANALISIS KEUANGAN (SQL VIEWS)
 -- ============================================================================
 
@@ -266,14 +289,16 @@ ORDER BY k.tanggal DESC;
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================================================
--- SELESAI. Seluruh tabel, data, relasi, dan view berhasil di-generate.
+-- SELESAI. Dump SQL berhasil digenerate dengan seluruh data riil lokal sistem.
 -- ============================================================================
 `;
 
   fs.writeFileSync(OUTPUT_SQL_PATH, sql, 'utf8');
   console.log(`✅ File SQL berhasil di-generate: ${OUTPUT_SQL_PATH}`);
   console.log(`   Ukuran: ${Buffer.byteLength(sql, 'utf8')} bytes`);
-  console.log(`   Jumlah record kas yang diekspor: ${records.length}`);
+  console.log(`   Record kas diekspor: ${records.length}`);
+  console.log(`   Rincian bon operasional: ${expensesList.length}`);
+  console.log(`   Transaksi rekening Mandiri diekspor: ${bankTxs.length}`);
 }
 
 generateSqlDump();
