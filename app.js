@@ -1877,16 +1877,15 @@ function setupOwnerPinModal() {
   }
 
   btnNav?.addEventListener('click', () => {
-    // If already verified in this session, navigate directly
-    if (sessionStorage.getItem(OWNER_AUTH_SESSION_KEY) === OWNER_SECURITY_PIN) {
-      window.location.href = 'monitoring-bank.html';
-      return;
-    }
+    // Tombol Rekening Mandiri & Restok HANYA UNTUK OWNER (Wajib verifikasi PIN 2209)
     openOwnerPinModal(
-      () => { window.location.href = 'monitoring-bank.html'; },
+      () => {
+        sessionStorage.setItem(OWNER_AUTH_SESSION_KEY, OWNER_SECURITY_PIN);
+        window.location.href = 'monitoring-bank.html';
+      },
       'Akses Khusus Owner',
       'Rekening Mandiri & Restok',
-      'Halaman ini dilindungi. Masukkan PIN keamanan Owner untuk melanjutkan:'
+      'Tombol Rekening Mandiri & Restok hanya untuk Owner. Masukkan PIN keamanan Owner (2209) untuk melanjutkan:'
     );
   });
 

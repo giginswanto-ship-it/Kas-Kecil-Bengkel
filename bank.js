@@ -957,6 +957,13 @@ function setupOwnerSecurityGate() {
     }
   });
 
+  // Kunci sesi otomatis saat navigasi kembali ke halaman Kas Kecil
+  document.querySelectorAll('a[href="index.html"]').forEach(link => {
+    link.addEventListener('click', () => {
+      sessionStorage.removeItem(OWNER_AUTH_SESSION_KEY);
+    });
+  });
+
   // Check current session
   const isAuth = sessionStorage.getItem(OWNER_AUTH_SESSION_KEY) === OWNER_SECURITY_PIN;
 
