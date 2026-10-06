@@ -1,7 +1,7 @@
 -- ============================================================================
 -- DATABASE DUMP & SKEMA RELASIONAL: MONITOR KAS KECIL BENGKEL
 -- Entitas Bisnis: Shop & Drive & Bima Motor / PT DUTARAYA BERJAYA
--- Tanggal Ekspor : 2026-10-06T12:24:51.644Z
+-- Tanggal Ekspor : 2026-10-06T13:15:01.775Z
 -- Format Data    : MySQL / MariaDB / PostgreSQL / SQLite Compatible DDL & DML
 -- Karakter Set   : UTF-8 (utf8mb4)
 -- Total Record   : 36 Catatan Kas Harian | 19 Transaksi Rekening Mandiri
