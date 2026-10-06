@@ -1,7 +1,7 @@
 -- ============================================================================
 -- DATABASE DUMP & SKEMA RELASIONAL: MONITOR KAS KECIL BENGKEL
 -- Entitas Bisnis: Shop & Drive & Bima Motor / PT DUTARAYA BERJAYA
--- Tanggal Ekspor : 2026-10-06T02:58:14.784Z
+-- Tanggal Ekspor : 2026-10-06T07:54:04.957Z
 -- Format Data    : MySQL / MariaDB / PostgreSQL / SQLite Compatible DDL & DML
 -- Karakter Set   : UTF-8 (utf8mb4)
 -- Total Record   : 35 Catatan Kas Harian | 19 Transaksi Rekening Mandiri
@@ -112,7 +112,7 @@ INSERT INTO tbl_pengaturan_sistem (setting_key, setting_value, deskripsi) VALUES
 ('rekening_mandiri_name', 'Bank Mandiri - 1560023250204', 'Nama rekening operasional bank'),
 ('owner_name', 'PT DUTARAYA BERJAYA', 'Nama pemilik bengkel / perusahaan'),
 ('pin_owner', '2209', 'PIN verifikasi owner untuk validasi status kas & rekening'),
-('saldo_awal_rekening', '0', 'Saldo awal buku rekening bank mandiri'),
+('saldo_awal_rekening', '29384422', 'Saldo awal buku rekening bank mandiri'),
 ('saldo_bulan_lalu', '29384422', 'Saldo buku rekening bulan lalu');
 
 -- B. Data Isian Rekap Kas Harian (Total: 35 Records)

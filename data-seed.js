@@ -1,4 +1,9 @@
-{
+/**
+ * DATA SEED AWAL SISTEM KAS KECIL & MONITORING BANK MANDIRI
+ * PT DUTARAYA BERJAYA - SHOP & DRIVE & BIMA MOTOR
+ * Otomatis di-bundle untuk offline & file:/// execution
+ */
+var BUNDLED_KAS_DATABASE = {
   "appName": "Monitor Kas Kecil Bengkel",
   "version": "1.0.0",
   "lastBackup": "2026-10-06T02:56:50.202Z",
@@ -1211,4 +1216,10 @@
       "sudahDiambil": true
     }
   ]
+};
+if (typeof window !== "undefined") {
+  window.BUNDLED_KAS_DATABASE = BUNDLED_KAS_DATABASE;
+}
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = BUNDLED_KAS_DATABASE;
 }

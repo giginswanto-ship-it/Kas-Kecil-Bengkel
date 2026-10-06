@@ -741,32 +741,55 @@ function setupCalendarControls() {
 // Inisialisasi data awal jika database masih kosong
 function initSampleDataIfEmpty() {
   const records = getSavedRecords();
-  if (records.length === 0) {
-    // Inisialisasi data awal tanggal 25 September 2026 (sesuai input aktif bengkel)
-    const initialRecord = {
-      id: "REC-20260925-01",
-      tanggal: "2026-09-25",
-      kasir: "Satria jaka Surya",
-      catatan: "Tutup shift kasir Shop & Drive & Bima Motor",
-      saldoAwal: 0,
-      penjualanShopDrive: 5089040,
-      penjualanBimaMotor: 0,
-      pemasukanLain: 0,
-      keteranganPemasukanLain: "",
-      totalPemasukan: 5089040,
-      transferMandiri: 772000,
-      cardEdc: 3761030,
-      penghematanTradeIn: 493000,
-      biayaOperasional: 0,
-      totalPengeluaranKas: 5026030,
-      sisaUangKasKecil: 63010,
-      fisikRiil: 63010,
-      selisih: 0,
-      sudahDiambil: false,
-      expenses: [],
-      createdAt: "2026-09-25T18:00:00.000Z"
-    };
-    saveRecordsToStorage([initialRecord]);
+  if (records.length <= 1) {
+    if (typeof window !== 'undefined' && window.BUNDLED_KAS_DATABASE && Array.isArray(window.BUNDLED_KAS_DATABASE.records) && window.BUNDLED_KAS_DATABASE.records.length > 1) {
+      saveRecordsToStorage(window.BUNDLED_KAS_DATABASE.records);
+    } else if (records.length === 0) {
+      // Fallback jika window.BUNDLED_KAS_DATABASE tidak dimuat
+      const initialRecord = {
+        id: "REC-20260925-01",
+        tanggal: "2026-09-25",
+        kasir: "Satria jaka Surya",
+        catatan: "Tutup shift kasir Shop & Drive & Bima Motor",
+        saldoAwal: 0,
+        penjualanShopDrive: 5089040,
+        penjualanBimaMotor: 0,
+        pemasukanLain: 0,
+        keteranganPemasukanLain: "",
+        totalPemasukan: 5089040,
+        transferMandiri: 772000,
+        cardEdc: 3761030,
+        penghematanTradeIn: 493000,
+        biayaOperasional: 0,
+        totalPengeluaranKas: 5026030,
+        sisaUangKasKecil: 63010,
+        fisikRiil: 63010,
+        selisih: 0,
+        sudahDiambil: false,
+        expenses: [],
+        createdAt: "2026-09-25T18:00:00.000Z"
+      };
+      saveRecordsToStorage([initialRecord]);
+    }
+  }
+
+  // Inisialisasi appSettings jika belum ada
+  if (!localStorage.getItem(SETTINGS_KEY)) {
+    if (typeof window !== 'undefined' && window.BUNDLED_KAS_DATABASE && window.BUNDLED_KAS_DATABASE.appSettings) {
+      saveAppSettings(window.BUNDLED_KAS_DATABASE.appSettings);
+    }
+  }
+
+  // Inisialisasi data bank Mandiri agar sinkron lintas halaman
+  if (!localStorage.getItem('bank_mandiri_transactions_v1')) {
+    if (typeof window !== 'undefined' && window.BUNDLED_KAS_DATABASE && Array.isArray(window.BUNDLED_KAS_DATABASE.bankTransactions)) {
+      localStorage.setItem('bank_mandiri_transactions_v1', JSON.stringify(window.BUNDLED_KAS_DATABASE.bankTransactions));
+    }
+  }
+  if (!localStorage.getItem('bank_mandiri_settings_v1')) {
+    if (typeof window !== 'undefined' && window.BUNDLED_KAS_DATABASE && window.BUNDLED_KAS_DATABASE.bankSettings) {
+      localStorage.setItem('bank_mandiri_settings_v1', JSON.stringify(window.BUNDLED_KAS_DATABASE.bankSettings));
+    }
   }
 }
 
